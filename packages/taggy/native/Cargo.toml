@@ -1,0 +1,15 @@
+[package]
+name = "taggy"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[build-dependencies]
+flutter_rust_bridge_codegen = "1.81.*"
+
+[dependencies]
+flutter_rust_bridge = "1.81.*"
+lofty = "0.15.0"
+thiserror = "1.0.47"
