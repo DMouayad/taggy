@@ -16,6 +16,7 @@ typedef struct wire_uint_8_list {
 
 typedef struct wire_Picture {
   int32_t pic_type;
+  struct wire_uint_8_list *pic_data;
   int32_t *mime_type;
   uint32_t *width;
   uint32_t *height;
@@ -29,7 +30,7 @@ typedef struct wire_list_picture {
 } wire_list_picture;
 
 typedef struct wire_Tag {
-  int32_t *tag_type;
+  int32_t tag_type;
   struct wire_list_picture *pictures;
   struct wire_uint_8_list *track_title;
   struct wire_uint_8_list *track_artist;
@@ -38,8 +39,8 @@ typedef struct wire_Tag {
   struct wire_uint_8_list *producer;
   uint32_t *track_number;
   uint32_t *track_total;
-  uint32_t *disk_number;
-  uint32_t *disk_total;
+  uint32_t *disc_number;
+  uint32_t *disc_total;
   uint32_t *year;
   struct wire_uint_8_list *recording_date;
   struct wire_uint_8_list *original_release_date;
@@ -65,16 +66,29 @@ uintptr_t new_dart_opaque(Dart_Handle handle);
 
 intptr_t init_frb_dart_api_dl(void *obj);
 
-void wire_read_from_path(int64_t port_, struct wire_uint_8_list *path);
+void wire_read_all(int64_t port_, struct wire_uint_8_list *path);
+
+void wire_read_primary(int64_t port_, struct wire_uint_8_list *path);
+
+void wire_read_any(int64_t port_, struct wire_uint_8_list *path);
 
 void wire_write_all(int64_t port_,
                     struct wire_uint_8_list *path,
                     struct wire_list_tag *tags,
-                    bool should_override);
+                    bool override_existent);
+
+void wire_write_primary(int64_t port_,
+                        struct wire_uint_8_list *path,
+                        struct wire_Tag *tag,
+                        bool keep_others);
+
+void wire_remove_all(int64_t port_, struct wire_uint_8_list *path);
+
+void wire_remove_tag(int64_t port_, struct wire_uint_8_list *path, struct wire_Tag *tag);
 
 int32_t *new_box_autoadd_mime_type_0(int32_t value);
 
-int32_t *new_box_autoadd_tag_type_0(int32_t value);
+struct wire_Tag *new_box_autoadd_tag_0(void);
 
 uint32_t *new_box_autoadd_u32_0(uint32_t value);
 
@@ -88,10 +102,15 @@ void free_WireSyncReturn(WireSyncReturn ptr);
 
 static int64_t dummy_method_to_enforce_bundling(void) {
     int64_t dummy_var = 0;
-    dummy_var ^= ((int64_t) (void*) wire_read_from_path);
+    dummy_var ^= ((int64_t) (void*) wire_read_all);
+    dummy_var ^= ((int64_t) (void*) wire_read_primary);
+    dummy_var ^= ((int64_t) (void*) wire_read_any);
     dummy_var ^= ((int64_t) (void*) wire_write_all);
+    dummy_var ^= ((int64_t) (void*) wire_write_primary);
+    dummy_var ^= ((int64_t) (void*) wire_remove_all);
+    dummy_var ^= ((int64_t) (void*) wire_remove_tag);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_mime_type_0);
-    dummy_var ^= ((int64_t) (void*) new_box_autoadd_tag_type_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_tag_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u32_0);
     dummy_var ^= ((int64_t) (void*) new_list_picture_0);
     dummy_var ^= ((int64_t) (void*) new_list_tag_0);

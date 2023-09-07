@@ -29,8 +29,8 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> with FlutterRustBri
   }
 
   @protected
-  int api2wire_box_autoadd_tag_type(TagType raw) {
-    return api2wire_tag_type(raw);
+  List<dynamic> api2wire_box_autoadd_tag(Tag raw) {
+    return api2wire_tag(raw);
   }
 
   @protected
@@ -59,11 +59,6 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> with FlutterRustBri
   }
 
   @protected
-  int? api2wire_opt_box_autoadd_tag_type(TagType? raw) {
-    return raw == null ? null : api2wire_box_autoadd_tag_type(raw);
-  }
-
-  @protected
   int? api2wire_opt_box_autoadd_u32(int? raw) {
     return raw == null ? null : api2wire_box_autoadd_u32(raw);
   }
@@ -72,6 +67,7 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> with FlutterRustBri
   List<dynamic> api2wire_picture(Picture raw) {
     return [
       api2wire_picture_type(raw.picType),
+      api2wire_uint_8_list(raw.picData),
       api2wire_opt_box_autoadd_mime_type(raw.mimeType),
       api2wire_opt_box_autoadd_u32(raw.width),
       api2wire_opt_box_autoadd_u32(raw.height),
@@ -83,7 +79,7 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> with FlutterRustBri
   @protected
   List<dynamic> api2wire_tag(Tag raw) {
     return [
-      api2wire_opt_box_autoadd_tag_type(raw.tagType),
+      api2wire_tag_type(raw.tagType),
       api2wire_list_picture(raw.pictures),
       api2wire_opt_String(raw.trackTitle),
       api2wire_opt_String(raw.trackArtist),
@@ -92,8 +88,8 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> with FlutterRustBri
       api2wire_opt_String(raw.producer),
       api2wire_opt_box_autoadd_u32(raw.trackNumber),
       api2wire_opt_box_autoadd_u32(raw.trackTotal),
-      api2wire_opt_box_autoadd_u32(raw.diskNumber),
-      api2wire_opt_box_autoadd_u32(raw.diskTotal),
+      api2wire_opt_box_autoadd_u32(raw.discNumber),
+      api2wire_opt_box_autoadd_u32(raw.discTotal),
       api2wire_opt_box_autoadd_u32(raw.year),
       api2wire_opt_String(raw.recordingDate),
       api2wire_opt_String(raw.originalReleaseDate),
@@ -120,9 +116,19 @@ external TaggyWasmModule get wasmModule;
 class TaggyWasmModule implements WasmModule {
   external Object /* Promise */ call([String? moduleName]);
   external TaggyWasmModule bind(dynamic thisArg, String moduleName);
-  external dynamic /* void */ wire_read_from_path(NativePortType port_, String path);
+  external dynamic /* void */ wire_read_all(NativePortType port_, String path);
 
-  external dynamic /* void */ wire_write_all(NativePortType port_, String path, List<dynamic> tags, bool should_override);
+  external dynamic /* void */ wire_read_primary(NativePortType port_, String path);
+
+  external dynamic /* void */ wire_read_any(NativePortType port_, String path);
+
+  external dynamic /* void */ wire_write_all(NativePortType port_, String path, List<dynamic> tags, bool override_existent);
+
+  external dynamic /* void */ wire_write_primary(NativePortType port_, String path, List<dynamic> tag, bool keep_others);
+
+  external dynamic /* void */ wire_remove_all(NativePortType port_, String path);
+
+  external dynamic /* void */ wire_remove_tag(NativePortType port_, String path, List<dynamic> tag);
 }
 
 // Section: WASM wire connector
@@ -130,7 +136,17 @@ class TaggyWasmModule implements WasmModule {
 class TaggyWire extends FlutterRustBridgeWasmWireBase<TaggyWasmModule> {
   TaggyWire(FutureOr<WasmModule> module) : super(WasmModule.cast<TaggyWasmModule>(module));
 
-  void wire_read_from_path(NativePortType port_, String path) => wasmModule.wire_read_from_path(port_, path);
+  void wire_read_all(NativePortType port_, String path) => wasmModule.wire_read_all(port_, path);
 
-  void wire_write_all(NativePortType port_, String path, List<dynamic> tags, bool should_override) => wasmModule.wire_write_all(port_, path, tags, should_override);
+  void wire_read_primary(NativePortType port_, String path) => wasmModule.wire_read_primary(port_, path);
+
+  void wire_read_any(NativePortType port_, String path) => wasmModule.wire_read_any(port_, path);
+
+  void wire_write_all(NativePortType port_, String path, List<dynamic> tags, bool override_existent) => wasmModule.wire_write_all(port_, path, tags, override_existent);
+
+  void wire_write_primary(NativePortType port_, String path, List<dynamic> tag, bool keep_others) => wasmModule.wire_write_primary(port_, path, tag, keep_others);
+
+  void wire_remove_all(NativePortType port_, String path) => wasmModule.wire_remove_all(port_, path);
+
+  void wire_remove_tag(NativePortType port_, String path, List<dynamic> tag) => wasmModule.wire_remove_tag(port_, path, tag);
 }

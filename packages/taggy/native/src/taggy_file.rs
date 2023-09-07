@@ -1,9 +1,9 @@
 use crate::audio_info::AudioInfo;
-use crate::tag::Tag;
+use crate::tag::{Tag, TagType};
 
 /// A generic representation of an audio file
 ///
-/// Holds the information about a file and its audio tags.
+/// Holds information about a file and its audio tags.
 #[derive(Debug)]
 pub struct TaggyFile {
     /// The Type of this file
@@ -14,6 +14,21 @@ pub struct TaggyFile {
     pub(crate) audio: AudioInfo,
     /// The tags included with this file.
     pub(crate) tags: Vec<Tag>,
+    pub(crate) primary_tag_type: TagType,
+}
+
+impl TaggyFile {
+    /// Returns the tag which has a [`TagType`] equals to this file `primary_tag_type`.
+    pub fn primary_tag(self) -> Option<Tag> {
+        self.tags
+            .iter()
+            .find(|&t| t.tag_type == self.primary_tag_type)
+            .cloned()
+    }
+    /// Returns the first tag of this file tags.
+    pub fn first_tag(self) -> Option<Tag> {
+        self.tags.first().cloned()
+    }
 }
 
 /// The type of a file

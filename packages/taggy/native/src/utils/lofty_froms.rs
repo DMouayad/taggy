@@ -1,24 +1,19 @@
-use lofty::{Accessor, FileProperties, ItemKey};
+use lofty::{
+    Accessor, AudioFile, BoundTaggedFile, FileProperties, ItemKey, TaggedFile, TaggedFileExt,
+};
 //
 use crate::audio_info::AudioInfo;
 use crate::picture::{MimeType, Picture, PictureType};
 use crate::tag::{Tag, TagType};
-use crate::taggy_file::FileType;
+use crate::taggy_file::{FileType, TaggyFile};
+use crate::utils::file_utils::get_file_size;
 
 impl From<&lofty::Picture> for Picture {
-    fn from(value: &lofty::Picture) -> Self {
-        let [width, height, color_depth, num_colors] =
-            match lofty::PictureInformation::from_picture(&value) {
-                Ok(info) => [
-                    Some(info.width),
-                    Some(info.height),
-                    Some(info.color_depth),
-                    Some(info.num_colors),
-                ],
-                Err(_) => [None; 4],
-            };
+    fn from(value: &lofty::Picture) -> Picture {
+        let [width, height, color_depth, num_colors] = extract_image_info(&value);
         Self {
             pic_type: PictureType::from(value.pic_type()),
+            pic_data: value.data().to_vec(),
             mime_type: Some(MimeType::from(value.mime_type())),
             width,
             height,
@@ -28,10 +23,22 @@ impl From<&lofty::Picture> for Picture {
     }
 }
 
-impl<'a> From<&'a lofty::Tag> for Tag {
+fn extract_image_info(pic: &lofty::Picture) -> [Option<u32>; 4] {
+    match lofty::PictureInformation::from_picture(pic) {
+        Ok(info) => [
+            Some(info.width),
+            Some(info.height),
+            Some(info.color_depth),
+            Some(info.num_colors),
+        ],
+        Err(_) => [None; 4],
+    }
+}
+
+impl From<&lofty::Tag> for Tag {
     fn from(value: &lofty::Tag) -> Self {
         Self {
-            tag_type: Some(TagType::from(value.tag_type())),
+            tag_type: TagType::from(value.tag_type()),
             pictures: value.pictures().iter().map(Picture::from).collect(),
             track_title: extract_lofty_tag_string_item(&value, &ItemKey::TrackTitle),
             track_artist: extract_lofty_tag_string_item(&value, &ItemKey::TrackArtist),
@@ -40,8 +47,8 @@ impl<'a> From<&'a lofty::Tag> for Tag {
             producer: extract_lofty_tag_string_item(&value, &ItemKey::Producer),
             track_number: value.track(),
             track_total: value.track_total(),
-            disk_number: value.disk(),
-            disk_total: value.disk_total(),
+            disc_number: value.disk(),
+            disc_total: value.disk_total(),
             year: value.year(),
             recording_date: extract_lofty_tag_string_item(&value, &ItemKey::RecordingDate),
             original_release_date: extract_lofty_tag_string_item(
@@ -158,4 +165,37 @@ impl From<lofty::TagType> for TagType {
             _ => TagType::Other,
         }
     }
+}
+pub fn taggy_from_tagged(file: &TaggedFile, path: &String) -> TaggyFile {
+    TaggyFile {
+        file_type: Some(file.file_type().into()),
+        size: get_file_size(path),
+        audio: AudioInfo::from(file.properties()),
+        /// convert the [`TaggedFile::tags`] to a `Vec` of our taggy's [`Tag`]
+        tags: file.tags().iter().map(Tag::from).collect(),
+        primary_tag_type: TagType::from(file.primary_tag_type()),
+    }
+}
+
+pub(crate) fn taggy_from_bound_tagged(file: &BoundTaggedFile, path: &String) -> TaggyFile {
+    TaggyFile {
+        file_type: Some(file.file_type().into()),
+        size: get_file_size(path),
+        audio: AudioInfo::from(file.properties()),
+        /// convert the [`TaggedFile::tags`] to a `Vec` of our taggy's [`Tag`]
+        tags: file.tags().iter().map(Tag::from).collect(),
+        primary_tag_type: TagType::from(file.primary_tag_type()),
+    }
+}
+/// Returns a list of [Tag] with only the primary tag if exists
+pub(crate) fn get_primary_tag_from_tagged_file(file: &TaggedFile) -> Vec<Tag> {
+    let mut tags: Vec<Tag> = Vec::with_capacity(1);
+    if let Some(lofty_tag) = file.primary_tag() {
+        tags.push(Tag::from(lofty_tag));
+    }
+    tags
+}
+
+pub(crate) fn get_any_tag_from_tagged_file(file: &TaggedFile) -> Vec<Tag> {
+    file.first_tag().map_or(vec![], |t| vec![Tag::from(t)])
 }

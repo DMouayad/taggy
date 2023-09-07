@@ -27,8 +27,10 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> {
   }
 
   @protected
-  ffi.Pointer<ffi.Int32> api2wire_box_autoadd_tag_type(TagType raw) {
-    return inner.new_box_autoadd_tag_type_0(api2wire_tag_type(raw));
+  ffi.Pointer<wire_Tag> api2wire_box_autoadd_tag(Tag raw) {
+    final ptr = inner.new_box_autoadd_tag_0();
+    _api_fill_to_wire_tag(raw, ptr.ref);
+    return ptr;
   }
 
   @protected
@@ -65,11 +67,6 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> {
   }
 
   @protected
-  ffi.Pointer<ffi.Int32> api2wire_opt_box_autoadd_tag_type(TagType? raw) {
-    return raw == null ? ffi.nullptr : api2wire_box_autoadd_tag_type(raw);
-  }
-
-  @protected
   ffi.Pointer<ffi.Uint32> api2wire_opt_box_autoadd_u32(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_u32(raw);
   }
@@ -84,8 +81,13 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> {
 
 // Section: api_fill_to_wire
 
+  void _api_fill_to_wire_box_autoadd_tag(Tag apiObj, ffi.Pointer<wire_Tag> wireObj) {
+    _api_fill_to_wire_tag(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_picture(Picture apiObj, wire_Picture wireObj) {
     wireObj.pic_type = api2wire_picture_type(apiObj.picType);
+    wireObj.pic_data = api2wire_uint_8_list(apiObj.picData);
     wireObj.mime_type = api2wire_opt_box_autoadd_mime_type(apiObj.mimeType);
     wireObj.width = api2wire_opt_box_autoadd_u32(apiObj.width);
     wireObj.height = api2wire_opt_box_autoadd_u32(apiObj.height);
@@ -94,7 +96,7 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> {
   }
 
   void _api_fill_to_wire_tag(Tag apiObj, wire_Tag wireObj) {
-    wireObj.tag_type = api2wire_opt_box_autoadd_tag_type(apiObj.tagType);
+    wireObj.tag_type = api2wire_tag_type(apiObj.tagType);
     wireObj.pictures = api2wire_list_picture(apiObj.pictures);
     wireObj.track_title = api2wire_opt_String(apiObj.trackTitle);
     wireObj.track_artist = api2wire_opt_String(apiObj.trackArtist);
@@ -103,8 +105,8 @@ class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> {
     wireObj.producer = api2wire_opt_String(apiObj.producer);
     wireObj.track_number = api2wire_opt_box_autoadd_u32(apiObj.trackNumber);
     wireObj.track_total = api2wire_opt_box_autoadd_u32(apiObj.trackTotal);
-    wireObj.disk_number = api2wire_opt_box_autoadd_u32(apiObj.diskNumber);
-    wireObj.disk_total = api2wire_opt_box_autoadd_u32(apiObj.diskTotal);
+    wireObj.disc_number = api2wire_opt_box_autoadd_u32(apiObj.discNumber);
+    wireObj.disc_total = api2wire_opt_box_autoadd_u32(apiObj.discTotal);
     wireObj.year = api2wire_opt_box_autoadd_u32(apiObj.year);
     wireObj.recording_date = api2wire_opt_String(apiObj.recordingDate);
     wireObj.original_release_date = api2wire_opt_String(apiObj.originalReleaseDate);
@@ -190,35 +192,106 @@ class TaggyWire implements FlutterRustBridgeWireBase {
   late final _init_frb_dart_api_dlPtr = _lookup<ffi.NativeFunction<ffi.IntPtr Function(ffi.Pointer<ffi.Void>)>>('init_frb_dart_api_dl');
   late final _init_frb_dart_api_dl = _init_frb_dart_api_dlPtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
-  void wire_read_from_path(
+  void wire_read_all(
     int port_,
     ffi.Pointer<wire_uint_8_list> path,
   ) {
-    return _wire_read_from_path(
+    return _wire_read_all(
       port_,
       path,
     );
   }
 
-  late final _wire_read_from_pathPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_read_from_path');
-  late final _wire_read_from_path = _wire_read_from_pathPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+  late final _wire_read_allPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_read_all');
+  late final _wire_read_all = _wire_read_allPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_read_primary(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> path,
+  ) {
+    return _wire_read_primary(
+      port_,
+      path,
+    );
+  }
+
+  late final _wire_read_primaryPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_read_primary');
+  late final _wire_read_primary = _wire_read_primaryPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_read_any(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> path,
+  ) {
+    return _wire_read_any(
+      port_,
+      path,
+    );
+  }
+
+  late final _wire_read_anyPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_read_any');
+  late final _wire_read_any = _wire_read_anyPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_write_all(
     int port_,
     ffi.Pointer<wire_uint_8_list> path,
     ffi.Pointer<wire_list_tag> tags,
-    bool should_override,
+    bool override_existent,
   ) {
     return _wire_write_all(
       port_,
       path,
       tags,
-      should_override,
+      override_existent,
     );
   }
 
   late final _wire_write_allPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_list_tag>, ffi.Bool)>>('wire_write_all');
   late final _wire_write_all = _wire_write_allPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_list_tag>, bool)>();
+
+  void wire_write_primary(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> path,
+    ffi.Pointer<wire_Tag> tag,
+    bool keep_others,
+  ) {
+    return _wire_write_primary(
+      port_,
+      path,
+      tag,
+      keep_others,
+    );
+  }
+
+  late final _wire_write_primaryPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Tag>, ffi.Bool)>>('wire_write_primary');
+  late final _wire_write_primary = _wire_write_primaryPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Tag>, bool)>();
+
+  void wire_remove_all(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> path,
+  ) {
+    return _wire_remove_all(
+      port_,
+      path,
+    );
+  }
+
+  late final _wire_remove_allPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_remove_all');
+  late final _wire_remove_all = _wire_remove_allPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_remove_tag(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> path,
+    ffi.Pointer<wire_Tag> tag,
+  ) {
+    return _wire_remove_tag(
+      port_,
+      path,
+      tag,
+    );
+  }
+
+  late final _wire_remove_tagPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Tag>)>>('wire_remove_tag');
+  late final _wire_remove_tag = _wire_remove_tagPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Tag>)>();
 
   ffi.Pointer<ffi.Int32> new_box_autoadd_mime_type_0(
     int value,
@@ -231,16 +304,12 @@ class TaggyWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_mime_type_0Ptr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int32> Function(ffi.Int32)>>('new_box_autoadd_mime_type_0');
   late final _new_box_autoadd_mime_type_0 = _new_box_autoadd_mime_type_0Ptr.asFunction<ffi.Pointer<ffi.Int32> Function(int)>();
 
-  ffi.Pointer<ffi.Int32> new_box_autoadd_tag_type_0(
-    int value,
-  ) {
-    return _new_box_autoadd_tag_type_0(
-      value,
-    );
+  ffi.Pointer<wire_Tag> new_box_autoadd_tag_0() {
+    return _new_box_autoadd_tag_0();
   }
 
-  late final _new_box_autoadd_tag_type_0Ptr = _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int32> Function(ffi.Int32)>>('new_box_autoadd_tag_type_0');
-  late final _new_box_autoadd_tag_type_0 = _new_box_autoadd_tag_type_0Ptr.asFunction<ffi.Pointer<ffi.Int32> Function(int)>();
+  late final _new_box_autoadd_tag_0Ptr = _lookup<ffi.NativeFunction<ffi.Pointer<wire_Tag> Function()>>('new_box_autoadd_tag_0');
+  late final _new_box_autoadd_tag_0 = _new_box_autoadd_tag_0Ptr.asFunction<ffi.Pointer<wire_Tag> Function()>();
 
   ffi.Pointer<ffi.Uint32> new_box_autoadd_u32_0(
     int value,
@@ -311,6 +380,8 @@ final class wire_Picture extends ffi.Struct {
   @ffi.Int32()
   external int pic_type;
 
+  external ffi.Pointer<wire_uint_8_list> pic_data;
+
   external ffi.Pointer<ffi.Int32> mime_type;
 
   external ffi.Pointer<ffi.Uint32> width;
@@ -330,7 +401,8 @@ final class wire_list_picture extends ffi.Struct {
 }
 
 final class wire_Tag extends ffi.Struct {
-  external ffi.Pointer<ffi.Int32> tag_type;
+  @ffi.Int32()
+  external int tag_type;
 
   external ffi.Pointer<wire_list_picture> pictures;
 
@@ -348,9 +420,9 @@ final class wire_Tag extends ffi.Struct {
 
   external ffi.Pointer<ffi.Uint32> track_total;
 
-  external ffi.Pointer<ffi.Uint32> disk_number;
+  external ffi.Pointer<ffi.Uint32> disc_number;
 
-  external ffi.Pointer<ffi.Uint32> disk_total;
+  external ffi.Pointer<ffi.Uint32> disc_total;
 
   external ffi.Pointer<ffi.Uint32> year;
 

@@ -7,4 +7,4 @@ typedef ExternalLibrary = Object;
 
 Taggy createWrapperImpl(ExternalLibrary lib) => throw UnimplementedError();
 
-Object createLibraryImpl() => throw UnimplementedError();
+Object createLibraryImpl([String? libPath]) => throw UnimplementedError();

@@ -16,27 +16,74 @@ import 'package:uuid/uuid.dart';
 import 'bridge_generated.io.dart' if (dart.library.html) 'bridge_generated.web.dart';
 
 abstract class Taggy {
-  /// Read & parse audio tags from the file at given `path`.
-  ///
-  /// # Example
-  /// ```rust
-  ///  let taggy_file = read_from_path("path/to/file/sample.mp3");
-  ///  match taggy_file {
-  ///         Ok(f) => /* use the acquired file */,
-  ///         Err(e)=> /* handle an error */,
-  ///     };
-  /// ```
-  Future<TaggyFile> readFromPath({required String path, dynamic hint});
+  /// Read all audio tags from the file at given `path`.
+  Future<TaggyFile> readAll({required String path, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kReadFromPathConstMeta;
+  FlutterRustBridgeTaskConstMeta get kReadAllConstMeta;
 
-  /// Write all provided `tags` for the file at given `path`.
+  /// Read only the primary audio tag from the file at given `path`.
   ///
-  /// when `should_override` is set to `true`, this will remove all existing tags.
-  /// Otherwise, it will add to/update the existing ones.
-  Future<void> writeAll({required String path, required List<Tag> tags, required bool shouldOverride, dynamic hint});
+  /// **Note**: If the primary tag does not exist,
+  /// this will return a [TaggyFile] with no tags.
+  ///
+  /// Throws an **exception** when:
+  /// - path doesn't exists
+  Future<TaggyFile> readPrimary({required String path, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kReadPrimaryConstMeta;
+
+  /// Read any audio tag from the file at the given `path`.
+  ///
+  /// **Note**: If the file has no tags,
+  /// this will return a [TaggyFile] with an empty tags.
+  ///
+  /// Throws an **exception** when:
+  /// - path doesn't exists
+  Future<TaggyFile> readAny({required String path, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kReadAnyConstMeta;
+
+  /// Write all provided `tags` to the file at given `path`.
+  ///
+  /// when `override_existent` is set to `true`, this will remove all existing tags.
+  /// Otherwise, it will add or update any existing ones.
+  ///
+  /// Throws an **exception** when:
+  /// - path doesn't exists
+  Future<TaggyFile> writeAll({required String path, required List<Tag> tags, required bool overrideExistent, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kWriteAllConstMeta;
+
+  /// Write the provided `tag` as the primary tag for the file at given `path`.
+  ///
+  /// If `keep_others` is set to `false`, this will remove any existing tags from the file.
+  ///
+  /// **Note**: the `tag_type` of the give tag will be overridden with the file primary tag type,
+  /// so you can set it to any or use [TagType.FilePrimaryType].
+  ///
+  /// Throws an **exception** when:
+  /// - path doesn't exists
+  Future<TaggyFile> writePrimary({required String path, required Tag tag, required bool keepOthers, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kWritePrimaryConstMeta;
+
+  /// Delete all tags from file at given `path`.
+  ///
+  /// Throws an **exception** when:
+  /// - path doesn't exists
+  Future<void> removeAll({required String path, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRemoveAllConstMeta;
+
+  /// Delete the provided `tag` from file at the given `path`.
+  ///
+  /// If the `tag` doesn't exist, **no** errors will be returned.
+  ///
+  /// Throws an **exception** when:
+  /// - path doesn't exists
+  Future<void> removeTag({required String path, required Tag tag, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRemoveTagConstMeta;
 }
 
 /// The information of an audio track
@@ -101,8 +148,12 @@ enum MimeType {
   None,
 }
 
+/// Gives information about a tag's picture.
 class Picture {
   final PictureType picType;
+
+  /// The picture's data
+  final Uint8List picData;
 
   /// The picture's mimetype
   final MimeType? mimeType;
@@ -121,6 +172,7 @@ class Picture {
 
   const Picture({
     required this.picType,
+    required this.picData,
     this.mimeType,
     this.width,
     this.height,
@@ -155,21 +207,19 @@ enum PictureType {
 }
 
 class Tag {
-  final TagType? tagType;
+  final TagType tagType;
   final List<Picture> pictures;
   final String? trackTitle;
   final String? trackArtist;
   final String? album;
   final String? albumArtist;
   final String? producer;
-
-  /// The number of the track on its disk.
   final int? trackNumber;
 
-  /// The disk total track count
+  /// Total track count of this track's disc
   final int? trackTotal;
-  final int? diskNumber;
-  final int? diskTotal;
+  final int? discNumber;
+  final int? discTotal;
   final int? year;
   final String? recordingDate;
   final String? originalReleaseDate;
@@ -178,7 +228,7 @@ class Tag {
   final String? genre;
 
   const Tag({
-    this.tagType,
+    required this.tagType,
     required this.pictures,
     this.trackTitle,
     this.trackArtist,
@@ -187,8 +237,8 @@ class Tag {
     this.producer,
     this.trackNumber,
     this.trackTotal,
-    this.diskNumber,
-    this.diskTotal,
+    this.discNumber,
+    this.discTotal,
     this.year,
     this.recordingDate,
     this.originalReleaseDate,
@@ -220,13 +270,19 @@ enum TagType {
   /// Represents AIFF text chunks
   AiffText,
 
+  /// This will be converted to the audio file primary tag type.
+  ///
+  /// **Note**: this is intended for the tag passed to `write_primary()` if you don't
+  /// know the file primary tag type.
+  FilePrimaryType,
+
   /// Other type
   Other,
 }
 
 /// A generic representation of an audio file
 ///
-/// Holds the information about a file and its audio tags.
+/// Holds information about a file and its audio tags.
 class TaggyFile {
   /// The Type of this file
   final FileType? fileType;
@@ -239,12 +295,14 @@ class TaggyFile {
 
   /// The tags included with this file.
   final List<Tag> tags;
+  final TagType primaryTagType;
 
   const TaggyFile({
     this.fileType,
     this.size,
     required this.audio,
     required this.tags,
+    required this.primaryTagType,
   });
 }
 
@@ -255,12 +313,12 @@ class TaggyImpl implements Taggy {
   /// Only valid on web/WASM platforms.
   factory TaggyImpl.wasm(FutureOr<WasmModule> module) => TaggyImpl(module as ExternalLibrary);
   TaggyImpl.raw(this._platform);
-  Future<TaggyFile> readFromPath({required String path, dynamic hint}) {
+  Future<TaggyFile> readAll({required String path, dynamic hint}) {
     var arg0 = _platform.api2wire_String(path);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_read_from_path(port_, arg0),
+      callFfi: (port_) => _platform.inner.wire_read_all(port_, arg0),
       parseSuccessData: _wire2api_taggy_file,
-      constMeta: kReadFromPathConstMeta,
+      constMeta: kReadAllConstMeta,
       argValues: [
         path
       ],
@@ -268,25 +326,65 @@ class TaggyImpl implements Taggy {
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kReadFromPathConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "read_from_path",
+  FlutterRustBridgeTaskConstMeta get kReadAllConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "read_all",
         argNames: [
           "path"
         ],
       );
 
-  Future<void> writeAll({required String path, required List<Tag> tags, required bool shouldOverride, dynamic hint}) {
+  Future<TaggyFile> readPrimary({required String path, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(path);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_read_primary(port_, arg0),
+      parseSuccessData: _wire2api_taggy_file,
+      constMeta: kReadPrimaryConstMeta,
+      argValues: [
+        path
+      ],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kReadPrimaryConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "read_primary",
+        argNames: [
+          "path"
+        ],
+      );
+
+  Future<TaggyFile> readAny({required String path, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(path);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_read_any(port_, arg0),
+      parseSuccessData: _wire2api_taggy_file,
+      constMeta: kReadAnyConstMeta,
+      argValues: [
+        path
+      ],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kReadAnyConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "read_any",
+        argNames: [
+          "path"
+        ],
+      );
+
+  Future<TaggyFile> writeAll({required String path, required List<Tag> tags, required bool overrideExistent, dynamic hint}) {
     var arg0 = _platform.api2wire_String(path);
     var arg1 = _platform.api2wire_list_tag(tags);
-    var arg2 = shouldOverride;
+    var arg2 = overrideExistent;
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_write_all(port_, arg0, arg1, arg2),
-      parseSuccessData: _wire2api_unit,
+      parseSuccessData: _wire2api_taggy_file,
       constMeta: kWriteAllConstMeta,
       argValues: [
         path,
         tags,
-        shouldOverride
+        overrideExistent
       ],
       hint: hint,
     ));
@@ -297,7 +395,76 @@ class TaggyImpl implements Taggy {
         argNames: [
           "path",
           "tags",
-          "shouldOverride"
+          "overrideExistent"
+        ],
+      );
+
+  Future<TaggyFile> writePrimary({required String path, required Tag tag, required bool keepOthers, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(path);
+    var arg1 = _platform.api2wire_box_autoadd_tag(tag);
+    var arg2 = keepOthers;
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_write_primary(port_, arg0, arg1, arg2),
+      parseSuccessData: _wire2api_taggy_file,
+      constMeta: kWritePrimaryConstMeta,
+      argValues: [
+        path,
+        tag,
+        keepOthers
+      ],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kWritePrimaryConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "write_primary",
+        argNames: [
+          "path",
+          "tag",
+          "keepOthers"
+        ],
+      );
+
+  Future<void> removeAll({required String path, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(path);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_remove_all(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kRemoveAllConstMeta,
+      argValues: [
+        path
+      ],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRemoveAllConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "remove_all",
+        argNames: [
+          "path"
+        ],
+      );
+
+  Future<void> removeTag({required String path, required Tag tag, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(path);
+    var arg1 = _platform.api2wire_box_autoadd_tag(tag);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_remove_tag(port_, arg0, arg1),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kRemoveTagConstMeta,
+      argValues: [
+        path,
+        tag
+      ],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRemoveTagConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "remove_tag",
+        argNames: [
+          "path",
+          "tag"
         ],
       );
 
@@ -330,10 +497,6 @@ class TaggyImpl implements Taggy {
 
   MimeType _wire2api_box_autoadd_mime_type(dynamic raw) {
     return _wire2api_mime_type(raw);
-  }
-
-  TagType _wire2api_box_autoadd_tag_type(dynamic raw) {
-    return _wire2api_tag_type(raw);
   }
 
   int _wire2api_box_autoadd_u32(dynamic raw) {
@@ -380,10 +543,6 @@ class TaggyImpl implements Taggy {
     return raw == null ? null : _wire2api_box_autoadd_mime_type(raw);
   }
 
-  TagType? _wire2api_opt_box_autoadd_tag_type(dynamic raw) {
-    return raw == null ? null : _wire2api_box_autoadd_tag_type(raw);
-  }
-
   int? _wire2api_opt_box_autoadd_u32(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_u32(raw);
   }
@@ -398,14 +557,15 @@ class TaggyImpl implements Taggy {
 
   Picture _wire2api_picture(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return Picture(
       picType: _wire2api_picture_type(arr[0]),
-      mimeType: _wire2api_opt_box_autoadd_mime_type(arr[1]),
-      width: _wire2api_opt_box_autoadd_u32(arr[2]),
-      height: _wire2api_opt_box_autoadd_u32(arr[3]),
-      colorDepth: _wire2api_opt_box_autoadd_u32(arr[4]),
-      numColors: _wire2api_opt_box_autoadd_u32(arr[5]),
+      picData: _wire2api_uint_8_list(arr[1]),
+      mimeType: _wire2api_opt_box_autoadd_mime_type(arr[2]),
+      width: _wire2api_opt_box_autoadd_u32(arr[3]),
+      height: _wire2api_opt_box_autoadd_u32(arr[4]),
+      colorDepth: _wire2api_opt_box_autoadd_u32(arr[5]),
+      numColors: _wire2api_opt_box_autoadd_u32(arr[6]),
     );
   }
 
@@ -417,7 +577,7 @@ class TaggyImpl implements Taggy {
     final arr = raw as List<dynamic>;
     if (arr.length != 17) throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
     return Tag(
-      tagType: _wire2api_opt_box_autoadd_tag_type(arr[0]),
+      tagType: _wire2api_tag_type(arr[0]),
       pictures: _wire2api_list_picture(arr[1]),
       trackTitle: _wire2api_opt_String(arr[2]),
       trackArtist: _wire2api_opt_String(arr[3]),
@@ -426,8 +586,8 @@ class TaggyImpl implements Taggy {
       producer: _wire2api_opt_String(arr[6]),
       trackNumber: _wire2api_opt_box_autoadd_u32(arr[7]),
       trackTotal: _wire2api_opt_box_autoadd_u32(arr[8]),
-      diskNumber: _wire2api_opt_box_autoadd_u32(arr[9]),
-      diskTotal: _wire2api_opt_box_autoadd_u32(arr[10]),
+      discNumber: _wire2api_opt_box_autoadd_u32(arr[9]),
+      discTotal: _wire2api_opt_box_autoadd_u32(arr[10]),
       year: _wire2api_opt_box_autoadd_u32(arr[11]),
       recordingDate: _wire2api_opt_String(arr[12]),
       originalReleaseDate: _wire2api_opt_String(arr[13]),
@@ -443,12 +603,13 @@ class TaggyImpl implements Taggy {
 
   TaggyFile _wire2api_taggy_file(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return TaggyFile(
       fileType: _wire2api_opt_box_autoadd_file_type(arr[0]),
       size: _wire2api_opt_box_autoadd_u64(arr[1]),
       audio: _wire2api_audio_info(arr[2]),
       tags: _wire2api_list_tag(arr[3]),
+      primaryTagType: _wire2api_tag_type(arr[4]),
     );
   }
 

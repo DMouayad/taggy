@@ -1,279 +1,341 @@
-use crate::audio_info::AudioInfo;
-use crate::error::TaggyError;
-use crate::tag::Tag;
+use crate::tag::{Tag, TagType};
 use crate::taggy_file::TaggyFile;
-use crate::utils::perlude::Result;
-use lofty::{AudioFile, Probe, TaggedFile, TaggedFileExt};
-use std::fs;
-use std::path::Path;
+use crate::utils::lofty_froms::*;
+use anyhow::anyhow;
+use lofty::{BoundTaggedFile, ParseOptions, Probe, TaggedFile, TaggedFileExt};
+use std::fs::OpenOptions;
 
-/// Returns a [`lofty::TaggedFile`] at the given path.
-fn get_tagged_file(path: &str) -> Result<TaggedFile> {
-    fn err_handler(e: lofty::LoftyError) {
-        TaggyError::General(e.to_string());
-    }
-    //
-    match Probe::open(path) {
-        Ok(file) => match file.read() {
-            Ok(tf) => Ok(tf),
-            Err(e) => Err(TaggyError::General(e.to_string())),
-        },
-        Err(e) => Err(TaggyError::General(e.to_string())),
-    }
+/// Read all audio tags from the file at given `path`.
+pub fn read_all(path: String) -> anyhow::Result<TaggyFile> {
+    let tagged = get_tagged_file(path.as_ref())?;
+    Ok(taggy_from_tagged(&tagged, &path))
 }
 
-/// Read & parse audio tags from the file at given `path`.
+/// Read only the primary audio tag from the file at given `path`.
 ///
-/// # Example
-/// ```rust
-///  let taggy_file = read_from_path("path/to/file/sample.mp3");
-///  match taggy_file {
-///         Ok(f) => /* use the acquired file */,
-///         Err(e)=> /* handle an error */,
-///     };
-/// ```
-pub fn read_from_path(path: String) -> Result<TaggyFile> {
-    let file_result = get_tagged_file(path.as_ref());
-    if file_result.is_err() {
-        return Err(file_result.err().unwrap());
-    }
-    let file = file_result.unwrap();
+/// **Note**: If the primary tag does not exist,
+/// this will return a [TaggyFile] with no tags.
+///
+/// Throws an **exception** when:
+/// - path doesn't exists
+pub fn read_primary(path: String) -> anyhow::Result<TaggyFile> {
+    let tagged = get_tagged_file(path.as_ref())?;
+
     Ok(TaggyFile {
-        file_type: Some(file.file_type().into()),
-        size: get_file_size(&path),
-        audio: AudioInfo::from(file.properties()),
-        /// convert the [`TaggedFile::tags`] to a `Vec` of taggy's [`Tag`]
-        tags: file.tags().iter().map(Tag::from).collect(),
+        tags: get_primary_tag_from_tagged_file(&tagged),
+        ..taggy_from_tagged(&tagged, &path)
     })
 }
-fn get_file_size(path: &String) -> Option<u64> {
-    match fs::metadata(Path::new(&path)) {
-        Ok(meta) => Some(meta.len()),
-        Err(_) => None,
+
+/// Read any audio tag from the file at the given `path`.
+///
+/// **Note**: If the file has no tags,
+/// this will return a [TaggyFile] with an empty tags.
+///
+/// Throws an **exception** when:
+/// - path doesn't exists
+pub fn read_any(path: String) -> anyhow::Result<TaggyFile> {
+    let tagged = get_tagged_file(path.as_ref())?;
+
+    Ok(TaggyFile {
+        tags: get_any_tag_from_tagged_file(&tagged),
+        ..taggy_from_tagged(&tagged, &path)
+    })
+}
+
+/// A helper function to get a [`TaggedFile`] from the given path.
+/// the returned file will be used for reading properties only.
+fn get_tagged_file(path: &str) -> anyhow::Result<TaggedFile> {
+    match Probe::open(path) {
+        Err(_) => Err(anyhow!("The file path does not exist!")),
+        Ok(file) => match file.read() {
+            Ok(tf) => Ok(tf),
+            Err(e) => Err(anyhow!(e)),
+        },
     }
 }
-/// Write all provided `tags` for the file at given `path`.
+
+/// Write all provided `tags` to the file at given `path`.
 ///
-/// when `should_override` is set to `true`, this will remove all existing tags.
-/// Otherwise, it will add to/update the existing ones.
-pub fn write_all(path: String, tags: Vec<Tag>, should_override: bool) -> Result<()> {
-    if tags.is_empty() {
-        return Ok(()); // If there is no tags to be written, do nothing & return.
-    }
-    let file_result = get_tagged_file(path.as_ref());
-    if file_result.is_err() {
-        return Err(file_result.err().unwrap());
+/// when `override_existent` is set to `true`, this will remove all existing tags.
+/// Otherwise, it will add or update any existing ones.
+///
+/// Throws an **exception** when:
+/// - path doesn't exists
+pub fn write_all(
+    path: String,
+    tags: Vec<Tag>,
+    override_existent: bool,
+) -> anyhow::Result<TaggyFile> {
+    let mut tagged_file = get_bound_tagged_file(&path)?;
+
+    if override_existent {
+        tagged_file.clear();
     }
 
-    let mut file = file_result.unwrap();
-    if should_override {
-        file.clear(); // remove tags, but not from the file on disk
+    // convert the provided tags to lofty's Tag
+    let lofty_tags = tags.iter().map(|t| t.to_lofty()).collect();
+
+    // add tags to file
+    insert_tags(&mut tagged_file, &lofty_tags);
+
+    match tagged_file.save() {
+        Ok(_) => Ok(taggy_from_bound_tagged(&tagged_file, &path)),
+        Err(e) => Err(anyhow!(e)),
     }
+}
 
-    // convert the provided tags to a list of lofty's Tag
-    let lofty_tags: Vec<lofty::Tag> = vec![];
-    // tags.as_slice().iter().map(lofty::Tag::from).collect();
-
-    for tag in lofty_tags {
+fn insert_tags(file: &mut BoundTaggedFile, tags: &Vec<lofty::Tag>) {
+    for tag in tags {
         if file.insert_tag(tag.clone()).is_none() {
             eprintln!(
-                "The tag type {:?} is not supported for the file type {:?}",
+                "The tag type '{:?}' is not supported for the file type '{:?}'",
                 tag.tag_type(),
                 file.file_type()
             );
         }
     }
-    //
-    // if let Some(title) = data.title {
-    //     tag.insert_text(ItemKey::TrackTitle, title);
-    // }
-    //
-    // // Artist
-    // if let Some(artist) = data.artist {
-    //     tag.insert_text(ItemKey::TrackArtist, artist);
-    // }
-    //
-    // // Album Title
-    // if let Some(album) = data.album {
-    //     tag.insert_text(ItemKey::AlbumTitle, album);
-    // }
-    //
-    // // Year
-    // if let Some(year) = data.year {
-    //     tag.set_year(year);
-    // }
-    //
-    // // Genre
-    // if let Some(genre) = data.genre {
-    //     tag.insert_text(ItemKey::Genre, genre);
-    // }
-    //
-    // // Pictures
-    // for (i, picture) in data.pictures.into_iter().enumerate() {
-    //     tag.set_picture(
-    //         i,
-    //         lofty::Picture::new_unchecked(
-    //             picture.picture_type.into(),
-    //             picture.mime_type.into(),
-    //             None,
-    //             picture.bytes,
-    //         ),
-    //     );
-    // }
+}
 
-    match file.save_to_path(path) {
-        Ok(_) => Ok(()),
-        Err(e) => Err(TaggyError::General(e.to_string())),
+/// Write the provided `tag` as the primary tag for the file at given `path`.
+///
+/// If `keep_others` is set to `false`, this will remove any existing tags from the file.
+///
+/// **Note**: the `tag_type` of the give tag will be overridden with the file primary tag type,
+/// so you can set it to any or use [TagType.FilePrimaryType].
+///
+/// Throws an **exception** when:
+/// - path doesn't exists
+pub fn write_primary(path: String, tag: Tag, keep_others: bool) -> anyhow::Result<TaggyFile> {
+    let mut tagged_file = get_bound_tagged_file(&path)?;
+
+    if !keep_others {
+        tagged_file.clear();
+    }
+
+    let lofty_tag_type = tagged_file.file_type().primary_tag_type();
+
+    // override the tag's type with the file's primary tag type
+    let updated_tag = Tag {
+        tag_type: TagType::from(lofty_tag_type),
+        ..tag
+    };
+
+    // add tags to file
+    tagged_file.insert_tag(updated_tag.to_lofty());
+    tagged_file.save()?;
+
+    Ok(taggy_from_bound_tagged(&tagged_file, &path))
+}
+
+/// Delete all tags from file at given `path`.
+///
+/// Throws an **exception** when:
+/// - path doesn't exists
+pub fn remove_all(path: String) -> anyhow::Result<()> {
+    let mut tagged = get_bound_tagged_file(&path)?;
+    &tagged.clear();
+    let tag_type = tagged.primary_tag_type();
+    insert_empty_tag(&mut tagged, TagType::from(tag_type));
+    tagged
+        .save()
+        .map_err(|_| anyhow!("Failed to remove file tags"))
+}
+
+/// Delete the provided `tag` from file at the given `path`.
+///
+/// If the `tag` doesn't exist, **no** errors will be returned.
+///
+/// Throws an **exception** when:
+/// - path doesn't exists
+pub fn remove_tag(path: String, tag: Tag) -> anyhow::Result<()> {
+    let mut tagged = get_bound_tagged_file(&path)?;
+    if tagged.remove(tag.tag_type.into()).is_none() {
+        // There's no need for saving the file cuz it wasn't changed
+        // since the tag doesn't exist
+        return Ok(());
+    }
+    insert_empty_tag(&mut tagged, tag.tag_type);
+    tagged.save().map_err(|e| anyhow!(e))
+}
+
+/// Adds a tag with empty data to the file.
+///
+/// This is required to remove the metadata of existing tag with given `tag_type`.
+/// The Reason is still unknown to me but it was found during testing.
+fn insert_empty_tag(file: &mut BoundTaggedFile, tag_type: TagType) {
+    let empty_tag = Tag::new(tag_type);
+    file.insert_tag(empty_tag.to_lofty());
+}
+
+/// A helper function to get a [`BoundTaggedFile`] from the given path
+/// which can be used to read an write tags to the file on disk directly.
+fn get_bound_tagged_file(path: &String) -> anyhow::Result<BoundTaggedFile> {
+    // We'll need to open our file for reading *and* writing
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path.clone())?;
+
+    match BoundTaggedFile::read_from(file, ParseOptions::new()) {
+        Ok(file) => Ok(file),
+        Err(e) => Err(anyhow!(e)),
     }
 }
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
+    use crate::picture::{MimeType, Picture, PictureType};
+    use rand::Rng;
+    use std::env;
+    use std::fs::{copy, remove_file};
+    use std::path::Path;
 
     #[test]
-    fn test_reading_non_existing_file_returns_an_error() {
-        let taggy_file = read_from_path(String::from("fake/path/file.mp3"));
-        assert!(taggy_file.is_err());
+    fn reading_non_existing_file_is_an_error() {
+        let result = read_all(get_fake_path());
+        assert!(result.is_err());
     }
-    // #[test]
-    // fn read_tag_mp3() {
-    //     let tag = read_from_path("samples/test.mp3".to_string()).expect("Could not read tag.");
-    //
-    //     println!("{:?}", tag.title);
-    //     println!("{:?}", tag.artist);
-    //     println!("{:?}", tag.album);
-    //     println!("{:?}", tag.year);
-    //     println!("{:?}", tag.genre);
-    //     println!("{:?}", tag.duration);
-    //     println!("{:?}", tag.pictures);
-    // }
-    //
-    // #[test]
-    // fn clear_tag_mp3() {
-    //     write(
-    //         "samples/test.mp3".to_string(),
-    //         Tag {
-    //             title: None,
-    //             artist: None,
-    //             album: None,
-    //             year: None,
-    //             genre: None,
-    //             duration: None,
-    //             pictures: Vec::new(),
-    //         },
-    //     )
-    //     .expect("Could not write tag.");
-    //     read_tag_mp3();
-    // }
 
-    // #[test]
-    // fn write_tag_mp3() {
-    //     let picture1 = picture::Picture::new(
-    //         picture::PictureType::CoverFront,
-    //         picture::MimeType::Jpeg,
-    //         std::fs::File::open("samples/picture1.jpg")
-    //             .unwrap()
-    //             .bytes()
-    //             .map(|b| b.unwrap())
-    //             .collect(),
-    //     );
-    //
-    //     let picture2 = picture::Picture::new(
-    //         picture::PictureType::CoverBack,
-    //         picture::MimeType::Jpeg,
-    //         std::fs::File::open("samples/picture2.jpg")
-    //             .unwrap()
-    //             .bytes()
-    //             .map(|b| b.unwrap())
-    //             .collect(),
-    //     );
-    //
-    //     write(
-    //         "samples/test.mp3".to_string(),
-    //         Tag {
-    //             title: Some("Title".to_string()),
-    //             artist: Some("Artist".to_string()),
-    //             album: Some("Album".to_string()),
-    //             year: Some(2022),
-    //             genre: Some("Genre".to_string()),
-    //             pictures: vec![picture1, picture2],
-    //             ..Default::default()
-    //         },
-    //     )
-    //     .expect("Failed to write tag.");
+    #[test]
+    fn reading_existing_file_is_ok() {
+        let result = read_all(get_audio_sample_file_path());
+        assert!(result.is_ok());
+    }
 
-    // read_tag_mp3();
-    // }
-    //
-    // #[test]
-    // fn read_tag_mp4() {
-    //     let tag = read("samples/test.mp4".to_string()).expect("Could not read tag.");
-    //
-    //     println!("{:?}", tag.title);
-    //     println!("{:?}", tag.artist);
-    //     println!("{:?}", tag.album);
-    //     println!("{:?}", tag.year);
-    //     println!("{:?}", tag.genre);
-    //     println!("{:?}", tag.duration);
-    //     println!("{:?}", tag.pictures);
-    // }
-    //
-    // #[test]
-    // fn clear_tag_mp4() {
-    //     write(
-    //         "samples/test.mp4".to_string(),
-    //         Tag {
-    //             title: None,
-    //             artist: None,
-    //             album: None,
-    //             year: None,
-    //             genre: None,
-    //             duration: None,
-    //             pictures: Vec::new(),
-    //         },
-    //     )
-    //     .expect("Could not write tag.");
-    //     read_tag_mp4();
-    // }
-    //
-    // #[test]
-    // fn write_tag_mp4() {
-    //     let picture1 = picture::Picture::new(
-    //         picture::PictureType::CoverFront,
-    //         picture::MimeType::Jpeg,
-    //         std::fs::File::open("samples/picture1.jpg")
-    //             .unwrap()
-    //             .bytes()
-    //             .map(|b| b.unwrap())
-    //             .collect(),
-    //     );
-    //
-    //     let picture2 = picture::Picture::new(
-    //         picture::PictureType::CoverBack,
-    //         picture::MimeType::Jpeg,
-    //         std::fs::File::open("samples/picture2.jpg")
-    //             .unwrap()
-    //             .bytes()
-    //             .map(|b| b.unwrap())
-    //             .collect(),
-    //     );
-    //
-    //     write(
-    //         "samples/test.mp4".to_string(),
-    //         Tag {
-    //             title: Some("Title".to_string()),
-    //             artist: Some("Artist".to_string()),
-    //             album: Some("Album".to_string()),
-    //             year: Some(2022),
-    //             genre: Some("Genre".to_string()),
-    //             pictures: vec![picture1, picture2],
-    //             ..Default::default()
-    //         },
-    //     )
-    //     .expect("Failed to write tag.");
-    //
-    //     read_tag_mp4();
-    // }
+    #[test]
+    fn reading_file_with_no_tags_should_return_with_empty_tags() {
+        let path = get_no_tags_sample_file_path();
+        let taggy = read_all(path).unwrap();
+        assert!(taggy.tags.is_empty());
+    }
+
+    #[test]
+    fn writing_tags_to_non_existing_file_is_an_error() {
+        let result = write_all(get_fake_path(), vec![], true);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn it_updates_file_primary_tag() {
+        let path = get_audio_sample_file_path();
+        let old_tag = read_primary(path.clone()).unwrap().first_tag().unwrap();
+        let new_tag = Tag::builder().with_tag_type(old_tag.tag_type).create();
+        let result = write_primary(path.clone(), new_tag.clone(), false);
+        assert!(result.is_ok());
+        let tag_after_write = read_primary(path.clone()).unwrap().first_tag().unwrap();
+        assert_eq!(tag_after_write, new_tag);
+    }
+
+    #[test]
+    fn it_updates_a_file_with_no_tags_after_writing() {
+        let path = duplicate_file(get_no_tags_sample_file_path());
+        // `TagType::Id3v2` is the primary tag type for the file so the equality assertion passes for
+        // this property.
+        let tag = Tag::builder().with_tag_type(TagType::Id3v2).create();
+        // act
+        let result = write_primary(path.clone(), tag.clone(), true);
+        // clean-up
+        remove_file(Path::new(&path)).expect("Failed to clean up test asset");
+        // assert
+        let created_tag = result.unwrap().tags.first().unwrap().clone();
+        assert_eq!(created_tag, tag);
+    }
+
+    #[test]
+    fn it_adds_image_to_tag() {
+        let path = duplicate_file(get_no_tags_sample_file_path());
+        let pic = get_pic_from_asset();
+        let tag = Tag::builder().with_pictures(vec![pic.clone()]).create();
+        // act
+        let taggy =
+            write_primary(path.clone(), tag.clone(), false).expect("Failed to write primary tag");
+        let tag = taggy.primary_tag().unwrap();
+        let added_picture = tag.pictures.first().unwrap();
+        // clean up
+        remove_file(Path::new(&path)).expect("Failed to clean up test asset");
+        // assert
+        assert_eq!(added_picture.pic_data, pic.pic_data);
+    }
+
+    #[test]
+    fn it_removes_tag_from_file() {
+        let path = duplicate_file(get_audio_sample_file_path());
+        let taggy = read_primary(path.clone()).expect("Failed to read primary tag");
+        let tag = taggy.primary_tag();
+        // first assert a tag exists
+        assert!(tag.as_ref().is_some());
+        // act
+        let remove_result = remove_tag(path.clone(), tag.unwrap());
+        // if remove_result.
+        // assert
+        assert!(remove_result.is_ok());
+        let taggy_after = read_primary(path.clone()).expect("Failed to read primary tag");
+        assert!(taggy_after.primary_tag().is_none());
+        // clean_up
+        remove_file(path.clone()).expect("Failed to remove test asset");
+    }
+    /*
+     * Helper Functions
+     */
+    fn get_pic_from_asset() -> Picture {
+        let bytes = std::fs::read(get_image_path()).expect("Failed to read image bytes");
+        Picture {
+            pic_type: PictureType::CoverFront,
+            pic_data: bytes,
+            mime_type: Some(MimeType::Jpeg),
+            width: None,
+            height: None,
+            color_depth: None,
+            num_colors: None,
+        }
+    }
+
+    /// Creates a copy of the file at given `path` and place it in the same directory.
+    /// This returns the path of created copy.
+    ///
+    /// ## Note:
+    /// When finished, be sure to call ['std::fs::remove_file(path_of_copy)']
+    fn duplicate_file(path: String) -> String {
+        let rand = rand::thread_rng().gen_range(0..=100);
+        let file_name = format!("test_copy_{:?}.mp3", rand);
+        let path = Path::new(&path);
+        let copy_path = path.with_file_name(file_name);
+        let _ = copy(path, copy_path.as_path());
+        copy_path.to_str().unwrap().to_string()
+    }
+
+    fn get_image_path() -> String {
+        let current_dir = env::current_dir().expect("Failed to get current directory");
+        current_dir
+            .join("test_samples\\image.jpg")
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
+
+    fn get_audio_sample_file_path() -> String {
+        let current_dir = env::current_dir().expect("Failed to get current directory");
+        current_dir
+            .parent()
+            .unwrap()
+            .join("test_samples\\sample.mp3")
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
+
+    fn get_no_tags_sample_file_path() -> String {
+        let current_dir = env::current_dir().expect("Failed to get current directory");
+        current_dir
+            .join("test_samples\\no_tags.mp3")
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
+
+    fn get_fake_path() -> String {
+        String::from("fake/path/file.mp3")
+    }
 }

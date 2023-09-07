@@ -31,16 +31,42 @@ use crate::taggy_file::TaggyFile;
 
 // Section: wire functions
 
-fn wire_read_from_path_impl(port_: MessagePort, path: impl Wire2Api<String> + UnwindSafe) {
+fn wire_read_all_impl(port_: MessagePort, path: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, TaggyFile>(
         WrapInfo {
-            debug_name: "read_from_path",
+            debug_name: "read_all",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
         move || {
             let api_path = path.wire2api();
-            move |task_callback| read_from_path(api_path)
+            move |task_callback| read_all(api_path)
+        },
+    )
+}
+fn wire_read_primary_impl(port_: MessagePort, path: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, TaggyFile>(
+        WrapInfo {
+            debug_name: "read_primary",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_path = path.wire2api();
+            move |task_callback| read_primary(api_path)
+        },
+    )
+}
+fn wire_read_any_impl(port_: MessagePort, path: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, TaggyFile>(
+        WrapInfo {
+            debug_name: "read_any",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_path = path.wire2api();
+            move |task_callback| read_any(api_path)
         },
     )
 }
@@ -48,9 +74,9 @@ fn wire_write_all_impl(
     port_: MessagePort,
     path: impl Wire2Api<String> + UnwindSafe,
     tags: impl Wire2Api<Vec<Tag>> + UnwindSafe,
-    should_override: impl Wire2Api<bool> + UnwindSafe,
+    override_existent: impl Wire2Api<bool> + UnwindSafe,
 ) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, TaggyFile>(
         WrapInfo {
             debug_name: "write_all",
             port: Some(port_),
@@ -59,8 +85,59 @@ fn wire_write_all_impl(
         move || {
             let api_path = path.wire2api();
             let api_tags = tags.wire2api();
-            let api_should_override = should_override.wire2api();
-            move |task_callback| write_all(api_path, api_tags, api_should_override)
+            let api_override_existent = override_existent.wire2api();
+            move |task_callback| write_all(api_path, api_tags, api_override_existent)
+        },
+    )
+}
+fn wire_write_primary_impl(
+    port_: MessagePort,
+    path: impl Wire2Api<String> + UnwindSafe,
+    tag: impl Wire2Api<Tag> + UnwindSafe,
+    keep_others: impl Wire2Api<bool> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, TaggyFile>(
+        WrapInfo {
+            debug_name: "write_primary",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_path = path.wire2api();
+            let api_tag = tag.wire2api();
+            let api_keep_others = keep_others.wire2api();
+            move |task_callback| write_primary(api_path, api_tag, api_keep_others)
+        },
+    )
+}
+fn wire_remove_all_impl(port_: MessagePort, path: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
+        WrapInfo {
+            debug_name: "remove_all",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_path = path.wire2api();
+            move |task_callback| remove_all(api_path)
+        },
+    )
+}
+fn wire_remove_tag_impl(
+    port_: MessagePort,
+    path: impl Wire2Api<String> + UnwindSafe,
+    tag: impl Wire2Api<Tag> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
+        WrapInfo {
+            debug_name: "remove_tag",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_path = path.wire2api();
+            let api_tag = tag.wire2api();
+            move |task_callback| remove_tag(api_path, api_tag)
         },
     )
 }
@@ -154,7 +231,8 @@ impl Wire2Api<TagType> for i32 {
             4 => TagType::VorbisComments,
             5 => TagType::RiffInfo,
             6 => TagType::AiffText,
-            7 => TagType::Other,
+            7 => TagType::FilePrimaryType,
+            8 => TagType::Other,
             _ => unreachable!("Invalid variant for TagType: {}", self),
         }
     }
@@ -245,6 +323,7 @@ impl support::IntoDart for Picture {
     fn into_dart(self) -> support::DartAbi {
         vec![
             self.pic_type.into_into_dart().into_dart(),
+            self.pic_data.into_into_dart().into_dart(),
             self.mime_type.into_dart(),
             self.width.into_dart(),
             self.height.into_dart(),
@@ -300,7 +379,7 @@ impl rust2dart::IntoIntoDart<PictureType> for PictureType {
 impl support::IntoDart for Tag {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.tag_type.into_dart(),
+            self.tag_type.into_into_dart().into_dart(),
             self.pictures.into_into_dart().into_dart(),
             self.track_title.into_dart(),
             self.track_artist.into_dart(),
@@ -309,8 +388,8 @@ impl support::IntoDart for Tag {
             self.producer.into_dart(),
             self.track_number.into_dart(),
             self.track_total.into_dart(),
-            self.disk_number.into_dart(),
-            self.disk_total.into_dart(),
+            self.disc_number.into_dart(),
+            self.disc_total.into_dart(),
             self.year.into_dart(),
             self.recording_date.into_dart(),
             self.original_release_date.into_dart(),
@@ -338,7 +417,8 @@ impl support::IntoDart for TagType {
             Self::VorbisComments => 4,
             Self::RiffInfo => 5,
             Self::AiffText => 6,
-            Self::Other => 7,
+            Self::FilePrimaryType => 7,
+            Self::Other => 8,
         }
         .into_dart()
     }
@@ -357,6 +437,7 @@ impl support::IntoDart for TaggyFile {
             self.size.into_dart(),
             self.audio.into_into_dart().into_dart(),
             self.tags.into_into_dart().into_dart(),
+            self.primary_tag_type.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -381,13 +462,43 @@ mod web {
     // Section: wire functions
 
     #[wasm_bindgen]
-    pub fn wire_read_from_path(port_: MessagePort, path: String) {
-        wire_read_from_path_impl(port_, path)
+    pub fn wire_read_all(port_: MessagePort, path: String) {
+        wire_read_all_impl(port_, path)
     }
 
     #[wasm_bindgen]
-    pub fn wire_write_all(port_: MessagePort, path: String, tags: JsValue, should_override: bool) {
-        wire_write_all_impl(port_, path, tags, should_override)
+    pub fn wire_read_primary(port_: MessagePort, path: String) {
+        wire_read_primary_impl(port_, path)
+    }
+
+    #[wasm_bindgen]
+    pub fn wire_read_any(port_: MessagePort, path: String) {
+        wire_read_any_impl(port_, path)
+    }
+
+    #[wasm_bindgen]
+    pub fn wire_write_all(
+        port_: MessagePort,
+        path: String,
+        tags: JsValue,
+        override_existent: bool,
+    ) {
+        wire_write_all_impl(port_, path, tags, override_existent)
+    }
+
+    #[wasm_bindgen]
+    pub fn wire_write_primary(port_: MessagePort, path: String, tag: JsValue, keep_others: bool) {
+        wire_write_primary_impl(port_, path, tag, keep_others)
+    }
+
+    #[wasm_bindgen]
+    pub fn wire_remove_all(port_: MessagePort, path: String) {
+        wire_remove_all_impl(port_, path)
+    }
+
+    #[wasm_bindgen]
+    pub fn wire_remove_tag(port_: MessagePort, path: String, tag: JsValue) {
+        wire_remove_tag_impl(port_, path, tag)
     }
 
     // Section: allocate functions
@@ -432,17 +543,18 @@ mod web {
             let self_ = self.dyn_into::<JsArray>().unwrap();
             assert_eq!(
                 self_.length(),
-                6,
-                "Expected 6 elements, got {}",
+                7,
+                "Expected 7 elements, got {}",
                 self_.length()
             );
             Picture {
                 pic_type: self_.get(0).wire2api(),
-                mime_type: self_.get(1).wire2api(),
-                width: self_.get(2).wire2api(),
-                height: self_.get(3).wire2api(),
-                color_depth: self_.get(4).wire2api(),
-                num_colors: self_.get(5).wire2api(),
+                pic_data: self_.get(1).wire2api(),
+                mime_type: self_.get(2).wire2api(),
+                width: self_.get(3).wire2api(),
+                height: self_.get(4).wire2api(),
+                color_depth: self_.get(5).wire2api(),
+                num_colors: self_.get(6).wire2api(),
             }
         }
     }
@@ -466,8 +578,8 @@ mod web {
                 producer: self_.get(6).wire2api(),
                 track_number: self_.get(7).wire2api(),
                 track_total: self_.get(8).wire2api(),
-                disk_number: self_.get(9).wire2api(),
-                disk_total: self_.get(10).wire2api(),
+                disc_number: self_.get(9).wire2api(),
+                disc_total: self_.get(10).wire2api(),
                 year: self_.get(11).wire2api(),
                 recording_date: self_.get(12).wire2api(),
                 original_release_date: self_.get(13).wire2api(),
@@ -515,11 +627,6 @@ mod web {
             (!self.is_undefined() && !self.is_null()).then(|| self.wire2api())
         }
     }
-    impl Wire2Api<Option<TagType>> for JsValue {
-        fn wire2api(self) -> Option<TagType> {
-            (!self.is_undefined() && !self.is_null()).then(|| self.wire2api())
-        }
-    }
     impl Wire2Api<Option<u32>> for JsValue {
         fn wire2api(self) -> Option<u32> {
             (!self.is_undefined() && !self.is_null()).then(|| self.wire2api())
@@ -560,8 +667,18 @@ mod io {
     // Section: wire functions
 
     #[no_mangle]
-    pub extern "C" fn wire_read_from_path(port_: i64, path: *mut wire_uint_8_list) {
-        wire_read_from_path_impl(port_, path)
+    pub extern "C" fn wire_read_all(port_: i64, path: *mut wire_uint_8_list) {
+        wire_read_all_impl(port_, path)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn wire_read_primary(port_: i64, path: *mut wire_uint_8_list) {
+        wire_read_primary_impl(port_, path)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn wire_read_any(port_: i64, path: *mut wire_uint_8_list) {
+        wire_read_any_impl(port_, path)
     }
 
     #[no_mangle]
@@ -569,9 +686,29 @@ mod io {
         port_: i64,
         path: *mut wire_uint_8_list,
         tags: *mut wire_list_tag,
-        should_override: bool,
+        override_existent: bool,
     ) {
-        wire_write_all_impl(port_, path, tags, should_override)
+        wire_write_all_impl(port_, path, tags, override_existent)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn wire_write_primary(
+        port_: i64,
+        path: *mut wire_uint_8_list,
+        tag: *mut wire_Tag,
+        keep_others: bool,
+    ) {
+        wire_write_primary_impl(port_, path, tag, keep_others)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn wire_remove_all(port_: i64, path: *mut wire_uint_8_list) {
+        wire_remove_all_impl(port_, path)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn wire_remove_tag(port_: i64, path: *mut wire_uint_8_list, tag: *mut wire_Tag) {
+        wire_remove_tag_impl(port_, path, tag)
     }
 
     // Section: allocate functions
@@ -582,8 +719,8 @@ mod io {
     }
 
     #[no_mangle]
-    pub extern "C" fn new_box_autoadd_tag_type_0(value: i32) -> *mut i32 {
-        support::new_leak_box_ptr(value)
+    pub extern "C" fn new_box_autoadd_tag_0() -> *mut wire_Tag {
+        support::new_leak_box_ptr(wire_Tag::new_with_null_ptr())
     }
 
     #[no_mangle]
@@ -635,10 +772,10 @@ mod io {
             Wire2Api::<MimeType>::wire2api(*wrap).into()
         }
     }
-    impl Wire2Api<TagType> for *mut i32 {
-        fn wire2api(self) -> TagType {
+    impl Wire2Api<Tag> for *mut wire_Tag {
+        fn wire2api(self) -> Tag {
             let wrap = unsafe { support::box_from_leak_ptr(self) };
-            Wire2Api::<TagType>::wire2api(*wrap).into()
+            Wire2Api::<Tag>::wire2api(*wrap).into()
         }
     }
     impl Wire2Api<u32> for *mut u32 {
@@ -670,6 +807,7 @@ mod io {
         fn wire2api(self) -> Picture {
             Picture {
                 pic_type: self.pic_type.wire2api(),
+                pic_data: self.pic_data.wire2api(),
                 mime_type: self.mime_type.wire2api(),
                 width: self.width.wire2api(),
                 height: self.height.wire2api(),
@@ -691,8 +829,8 @@ mod io {
                 producer: self.producer.wire2api(),
                 track_number: self.track_number.wire2api(),
                 track_total: self.track_total.wire2api(),
-                disk_number: self.disk_number.wire2api(),
-                disk_total: self.disk_total.wire2api(),
+                disc_number: self.disc_number.wire2api(),
+                disc_total: self.disc_total.wire2api(),
                 year: self.year.wire2api(),
                 recording_date: self.recording_date.wire2api(),
                 original_release_date: self.original_release_date.wire2api(),
@@ -731,6 +869,7 @@ mod io {
     #[derive(Clone)]
     pub struct wire_Picture {
         pic_type: i32,
+        pic_data: *mut wire_uint_8_list,
         mime_type: *mut i32,
         width: *mut u32,
         height: *mut u32,
@@ -741,7 +880,7 @@ mod io {
     #[repr(C)]
     #[derive(Clone)]
     pub struct wire_Tag {
-        tag_type: *mut i32,
+        tag_type: i32,
         pictures: *mut wire_list_picture,
         track_title: *mut wire_uint_8_list,
         track_artist: *mut wire_uint_8_list,
@@ -750,8 +889,8 @@ mod io {
         producer: *mut wire_uint_8_list,
         track_number: *mut u32,
         track_total: *mut u32,
-        disk_number: *mut u32,
-        disk_total: *mut u32,
+        disc_number: *mut u32,
+        disc_total: *mut u32,
         year: *mut u32,
         recording_date: *mut wire_uint_8_list,
         original_release_date: *mut wire_uint_8_list,
@@ -783,6 +922,7 @@ mod io {
         fn new_with_null_ptr() -> Self {
             Self {
                 pic_type: Default::default(),
+                pic_data: core::ptr::null_mut(),
                 mime_type: core::ptr::null_mut(),
                 width: core::ptr::null_mut(),
                 height: core::ptr::null_mut(),
@@ -801,7 +941,7 @@ mod io {
     impl NewWithNullPtr for wire_Tag {
         fn new_with_null_ptr() -> Self {
             Self {
-                tag_type: core::ptr::null_mut(),
+                tag_type: Default::default(),
                 pictures: core::ptr::null_mut(),
                 track_title: core::ptr::null_mut(),
                 track_artist: core::ptr::null_mut(),
@@ -810,8 +950,8 @@ mod io {
                 producer: core::ptr::null_mut(),
                 track_number: core::ptr::null_mut(),
                 track_total: core::ptr::null_mut(),
-                disk_number: core::ptr::null_mut(),
-                disk_total: core::ptr::null_mut(),
+                disc_number: core::ptr::null_mut(),
+                disc_total: core::ptr::null_mut(),
                 year: core::ptr::null_mut(),
                 recording_date: core::ptr::null_mut(),
                 original_release_date: core::ptr::null_mut(),
