@@ -136,9 +136,19 @@ pub fn write_primary(path: String, tag: Tag, keep_others: bool) -> anyhow::Resul
 /// - path doesn't exists
 pub fn remove_all(path: String) -> anyhow::Result<()> {
     let mut tagged = get_bound_tagged_file(&path)?;
+    // save the file tags types
+    let tags_types = tagged
+        .tags()
+        .iter()
+        .map(|e| e.tag_type())
+        .collect::<Vec<lofty::TagType>>();
+
     &tagged.clear();
-    let tag_type = tagged.primary_tag_type();
-    insert_empty_tag(&mut tagged, TagType::from(tag_type));
+
+    // foreach type we insert an empty tag to override its data
+    for tag_type in tags_types {
+        insert_empty_tag(&mut tagged, TagType::from(tag_type));
+    }
     tagged
         .save()
         .map_err(|_| anyhow!("Failed to remove file tags"))
@@ -261,7 +271,7 @@ mod tests {
     }
 
     #[test]
-    fn it_removes_tag_from_file() {
+    fn it_removes_a_specific_tag_from_file() {
         with_duplicate_file(get_audio_sample_file_path(), |path| {
             let taggy = read_primary(path.clone()).expect("Failed to read primary tag");
             let tag = taggy.primary_tag();
@@ -274,6 +284,22 @@ mod tests {
             assert!(remove_result.is_ok());
             let taggy_after = read_primary(path.clone()).expect("Failed to read primary tag");
             assert!(taggy_after.primary_tag().is_none());
+        });
+    }
+    #[test]
+    fn it_removes_all_tags_from_file() {
+        with_duplicate_file(get_audio_sample_file_path(), |path| {
+            let taggy = read_primary(path.clone()).expect("Failed to read primary tag");
+            let tag = taggy.primary_tag();
+            // first assert a tag exists
+            assert!(tag.as_ref().is_some());
+            // act
+            let remove_result = remove_all(path.clone());
+            // if remove_result.
+            // assert
+            assert!(remove_result.is_ok());
+            let taggy_after = read_all(path.clone()).expect("Failed to read primary tag");
+            assert!(taggy_after.tags.is_empty());
         });
     }
     /*
