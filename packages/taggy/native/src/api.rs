@@ -190,9 +190,9 @@ mod tests {
     use super::*;
     use crate::picture::{MimeType, Picture, PictureType};
     use rand::Rng;
-    use std::env;
     use std::fs::{copy, remove_file};
     use std::path::Path;
+    use std::{env, panic};
 
     #[test]
     fn reading_non_existing_file_is_an_error() {
@@ -221,62 +221,60 @@ mod tests {
 
     #[test]
     fn it_updates_file_primary_tag() {
-        let path = get_audio_sample_file_path();
-        let old_tag = read_primary(path.clone()).unwrap().first_tag().unwrap();
-        let new_tag = Tag::builder().with_tag_type(old_tag.tag_type).create();
-        let result = write_primary(path.clone(), new_tag.clone(), false);
-        assert!(result.is_ok());
-        let tag_after_write = read_primary(path.clone()).unwrap().first_tag().unwrap();
-        assert_eq!(tag_after_write, new_tag);
+        with_duplicate_file(get_audio_sample_file_path(), |path| {
+            let old_tag = read_primary(path.clone()).unwrap().first_tag().unwrap();
+            let new_tag = Tag::builder().with_tag_type(old_tag.tag_type).create();
+            let result = write_primary(path.clone(), new_tag.clone(), false);
+            let tag_after_write = read_primary(path.clone()).unwrap().first_tag().unwrap();
+            assert!(result.is_ok());
+            assert_eq!(tag_after_write, new_tag);
+        });
     }
 
     #[test]
     fn it_updates_a_file_with_no_tags_after_writing() {
-        let path = duplicate_file(get_no_tags_sample_file_path());
-        // `TagType::Id3v2` is the primary tag type for the file so the equality assertion passes for
-        // this property.
-        let tag = Tag::builder().with_tag_type(TagType::Id3v2).create();
-        // act
-        let result = write_primary(path.clone(), tag.clone(), true);
-        // clean-up
-        remove_file(Path::new(&path)).expect("Failed to clean up test asset");
-        // assert
-        let created_tag = result.unwrap().tags.first().unwrap().clone();
-        assert_eq!(created_tag, tag);
+        with_duplicate_file(get_no_tags_sample_file_path(), |path| {
+            // `TagType::Id3v2` is the primary tag type for the file so the equality assertion passes for
+            // this property.
+            let tag = Tag::builder().with_tag_type(TagType::Id3v2).create();
+            // act
+            let result = write_primary(path.clone(), tag.clone(), true);
+            // assert
+            let created_tag = result.unwrap().tags.first().unwrap().clone();
+            assert_eq!(created_tag, tag);
+        });
     }
 
     #[test]
     fn it_adds_image_to_tag() {
-        let path = duplicate_file(get_no_tags_sample_file_path());
-        let pic = get_pic_from_asset();
-        let tag = Tag::builder().with_pictures(vec![pic.clone()]).create();
-        // act
-        let taggy =
-            write_primary(path.clone(), tag.clone(), false).expect("Failed to write primary tag");
-        let tag = taggy.primary_tag().unwrap();
-        let added_picture = tag.pictures.first().unwrap();
-        // clean up
-        remove_file(Path::new(&path)).expect("Failed to clean up test asset");
-        // assert
-        assert_eq!(added_picture.pic_data, pic.pic_data);
+        with_duplicate_file(get_no_tags_sample_file_path(), |path| {
+            let pic = get_pic_from_asset();
+            let tag = Tag::builder().with_pictures(vec![pic.clone()]).create();
+            // act
+            let taggy = write_primary(path.clone(), tag.clone(), false)
+                .expect("Failed to write primary tag");
+            let tag = taggy.primary_tag().unwrap();
+            let added_picture = tag.pictures.first().unwrap();
+            // assert
+            assert_eq!(added_picture.pic_data, pic.pic_data);
+        });
     }
 
     #[test]
     fn it_removes_tag_from_file() {
-        let path = duplicate_file(get_audio_sample_file_path());
-        let taggy = read_primary(path.clone()).expect("Failed to read primary tag");
-        let tag = taggy.primary_tag();
-        // first assert a tag exists
-        assert!(tag.as_ref().is_some());
-        // act
-        let remove_result = remove_tag(path.clone(), tag.unwrap());
-        // if remove_result.
-        // assert
-        assert!(remove_result.is_ok());
-        let taggy_after = read_primary(path.clone()).expect("Failed to read primary tag");
-        assert!(taggy_after.primary_tag().is_none());
-        // clean_up
-        remove_file(path.clone()).expect("Failed to remove test asset");
+        with_duplicate_file(get_audio_sample_file_path(), |path| {
+            let taggy = read_primary(path.clone()).expect("Failed to read primary tag");
+            let tag = taggy.primary_tag();
+            // first assert a tag exists
+            assert!(tag.as_ref().is_some());
+            // act
+            let remove_result = remove_tag(path.clone(), tag.unwrap());
+            // if remove_result.
+            // assert
+            assert!(remove_result.is_ok());
+            let taggy_after = read_primary(path.clone()).expect("Failed to read primary tag");
+            assert!(taggy_after.primary_tag().is_none());
+        });
     }
     /*
      * Helper Functions
@@ -295,22 +293,36 @@ mod tests {
     }
 
     /// Creates a copy of the file at given `path` and place it in the same directory.
-    /// This returns the path of created copy.
+    /// Then calls [op] with the duplicated file path.
     ///
-    /// ## Note:
-    /// When finished, be sure to call ['std::fs::remove_file(path_of_copy)']
-    fn duplicate_file(path: String) -> String {
+    /// The duplicated file will be **automatically removed** when [op] is finished.
+    fn with_duplicate_file(path: String, op: fn(d_path: String)) {
         let rand = rand::thread_rng().gen_range(0..=100);
         let file_name = format!("test_copy_{:?}.mp3", rand);
         let path = Path::new(&path);
         let copy_path = path.with_file_name(file_name);
-        let _ = copy(path, copy_path.as_path());
-        copy_path.to_str().unwrap().to_string()
-    }
+        copy(path, copy_path.as_path()).expect("Failed to copy the test sample file");
+        let duplicate_path = copy_path.to_str().unwrap().to_string();
 
+        // Execute the operation within a Result context
+        let result = panic::catch_unwind(|| op(duplicate_path.clone()));
+
+        // Remove the duplicate file regardless of the operation result
+        remove_duplicate(&duplicate_path);
+
+        // Check if the operation panicked and Re-throw the error
+        if let Err(panic) = result {
+            panic::resume_unwind(panic);
+        }
+    }
+    fn remove_duplicate(path: &str) {
+        remove_file(path).expect("Failed to remove test asset");
+    }
     fn get_image_path() -> String {
         let current_dir = env::current_dir().expect("Failed to get current directory");
         current_dir
+            .parent()
+            .unwrap()
             .join("test_samples\\image.jpg")
             .to_str()
             .unwrap()
@@ -331,6 +343,8 @@ mod tests {
     fn get_no_tags_sample_file_path() -> String {
         let current_dir = env::current_dir().expect("Failed to get current directory");
         current_dir
+            .parent()
+            .unwrap()
             .join("test_samples\\no_tags.mp3")
             .to_str()
             .unwrap()
