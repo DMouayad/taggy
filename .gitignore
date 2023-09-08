@@ -8,7 +8,7 @@
 .buildlog/
 .history
 .svn/
-
+.vscode/
 # IntelliJ related
 *.iml
 *.ipr
@@ -36,6 +36,3 @@ build/
 /target/
 /Cargo.lock
 /platform-build
-/packages/taggy/test_samples/image.jpg
-/packages/taggy/test_samples/no_tags.mp3
-/packages/taggy/test_samples/sample.mp3
