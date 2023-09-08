@@ -87,9 +87,11 @@ pub fn write_all(
 
 fn insert_tags(file: &mut BoundTaggedFile, tags: &Vec<lofty::Tag>) {
     for tag in tags {
-        if file.insert_tag(tag.clone()).is_none() {
-            eprintln!(
-                "The tag type '{:?}' is not supported for the file type '{:?}'",
+        if file.supports_tag_type(tag.tag_type()) {
+            file.insert_tag(tag.clone());
+        } else {
+            println!(
+                "taggy: The tag type '{:?}' is not supported for the file type '{:?}'",
                 tag.tag_type(),
                 file.file_type()
             );

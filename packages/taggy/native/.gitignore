@@ -1,4 +1,4 @@
 # Rust library related
 Cargo.lock
 target
-../test_samples/
+/build_ex.rs
