@@ -1,6 +1,7 @@
 import 'package:taggy/src/ffi.dart';
 
 import 'bridge_generated.dart' as bridge;
+export 'utils/utils.dart';
 
 bridge.Taggy? _api;
 
@@ -15,10 +16,17 @@ bridge.Taggy get api {
 }
 
 ///
-// This Provides an API for Dart clients to call the `ffi`.
+// This Provides a public API for Dart clients to call the platform-specific
+// native library.
 abstract class Taggy {
-  static void initialize([String? libPath]) {
-    _api ??= createLib(libPath);
+  /// Initializes Taggy. **Must** be called before usage.
+  ///
+  ///
+  /// #### Usage in a unit test:
+  ///
+  /// You need to provide the path of the dynamic [library] based on your OS.
+  static void initialize([String? library]) {
+    _api ??= createLib(library);
   }
 
   /// Read all audio tags from the file at given [path].
@@ -105,36 +113,5 @@ abstract class Taggy {
   static Future<void> removeTag(
       {required String path, required bridge.Tag tag}) async {
     return await api.removeTag(path: path, tag: tag);
-  }
-}
-
-extension TaggyFileExtension on bridge.TaggyFile {
-  /// Returns the size of this file in MegaBytes
-  double get sizeInMB {
-    if (size == null) return 0.0;
-    return double.parse(((size! / 1024) / 1000).toStringAsFixed(2));
-  }
-
-  /// Returns the duration of the audio track
-  Duration get duration {
-    return Duration(seconds: audio.durationSec ?? 0);
-  }
-
-  String formatAsString() {
-    return '''
-    TaggyFile: {
-      size: $size bytes ~ $sizeInMB MB,
-      fileType: $fileType
-      primaryTagType: $primaryTagType,
-      tags: [count: ${tags.length}],
-      audio: AudioInfo(
-        channelMask: ${audio.channelMask},
-        channels: ${audio.channels},
-        sampleRate: ${audio.sampleRate},
-        audioBitrate: ${audio.audioBitrate},
-        overallBitrate: ${audio.overallBitrate},
-        bitDepth: ${audio.bitDepth},
-        durationSec: ${audio.durationSec}),
-      }''';
   }
 }
