@@ -1,12 +1,13 @@
 name: taggy
-description: A dart package for reading, writing and converting audio files tags.
-version: 1.0.0
+description: Provides a simple API for reading, writing and converting audio tags.
+version: 0.1.0
 repository: https://github.com/DMouayad/taggy
+homepage: https://github.com/DMouayad/taggy/tree/master/packages/taggy
+issue_tracker: https://github.com/DMouayad/taggy/issues
 
 environment:
   sdk: ^3.0.0
 
-# Add regular dependencies here.
 dependencies:
   ffi: ^2.1.0
   flutter_rust_bridge: ^1.81.0

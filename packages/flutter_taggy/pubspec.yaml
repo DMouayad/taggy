@@ -1,7 +1,9 @@
 name: flutter_taggy
-description: A new Flutter FFI plugin project.
-version: 1.0.0
-homepage:
+description: Provides a simple API for reading, writing and converting audio tags.
+version: 0.1.0
+homepage: https://github.com/DMouayad/taggy/tree/master/packages/flutter_taggy
+repository: https://github.com/DMouayad/taggy
+issue_tracker: https://github.com/DMouayad/taggy/issues
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
