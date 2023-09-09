@@ -126,7 +126,7 @@ fn wire_remove_all_impl(port_: MessagePort, path: impl Wire2Api<String> + Unwind
 fn wire_remove_tag_impl(
     port_: MessagePort,
     path: impl Wire2Api<String> + UnwindSafe,
-    tag: impl Wire2Api<Tag> + UnwindSafe,
+    tag_type: impl Wire2Api<TagType> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, ()>(
         WrapInfo {
@@ -136,8 +136,8 @@ fn wire_remove_tag_impl(
         },
         move || {
             let api_path = path.wire2api();
-            let api_tag = tag.wire2api();
-            move |task_callback| remove_tag(api_path, api_tag)
+            let api_tag_type = tag_type.wire2api();
+            move |task_callback| remove_tag(api_path, api_tag_type)
         },
     )
 }
@@ -497,8 +497,8 @@ mod web {
     }
 
     #[wasm_bindgen]
-    pub fn wire_remove_tag(port_: MessagePort, path: String, tag: JsValue) {
-        wire_remove_tag_impl(port_, path, tag)
+    pub fn wire_remove_tag(port_: MessagePort, path: String, tag_type: i32) {
+        wire_remove_tag_impl(port_, path, tag_type)
     }
 
     // Section: allocate functions
@@ -707,8 +707,8 @@ mod io {
     }
 
     #[no_mangle]
-    pub extern "C" fn wire_remove_tag(port_: i64, path: *mut wire_uint_8_list, tag: *mut wire_Tag) {
-        wire_remove_tag_impl(port_, path, tag)
+    pub extern "C" fn wire_remove_tag(port_: i64, path: *mut wire_uint_8_list, tag_type: i32) {
+        wire_remove_tag_impl(port_, path, tag_type)
     }
 
     // Section: allocate functions

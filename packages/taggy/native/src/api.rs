@@ -154,20 +154,21 @@ pub fn remove_all(path: String) -> anyhow::Result<()> {
         .map_err(|_| anyhow!("Failed to remove file tags"))
 }
 
-/// Delete the provided `tag` from file at the given `path`.
+/// Deletes the `tag` with `TagType` equals to `tag_type` from file at the given `path`.
 ///
-/// If the `tag` doesn't exist, **no** errors will be returned.
+/// If the file doesn't have any tag with the given `tag_type`,
+/// **no** errors will be returned.
 ///
 /// Throws an **exception** when:
 /// - path doesn't exists
-pub fn remove_tag(path: String, tag: Tag) -> anyhow::Result<()> {
+pub fn remove_tag(path: String, tag_type: TagType) -> anyhow::Result<()> {
     let mut tagged = get_bound_tagged_file(&path)?;
-    if tagged.remove(tag.tag_type.into()).is_none() {
+    if tagged.remove(tag_type.into()).is_none() {
         // There's no need for saving the file cuz it wasn't changed
         // since the tag doesn't exist
         return Ok(());
     }
-    insert_empty_tag(&mut tagged, tag.tag_type);
+    insert_empty_tag(&mut tagged, tag_type);
     tagged.save().map_err(|e| anyhow!(e))
 }
 
@@ -278,7 +279,7 @@ mod tests {
             // first assert a tag exists
             assert!(tag.as_ref().is_some());
             // act
-            let remove_result = remove_tag(path.clone(), tag.unwrap());
+            let remove_result = remove_tag(path.clone(), tag.unwrap().tag_type);
             // if remove_result.
             // assert
             assert!(remove_result.is_ok());
@@ -302,6 +303,23 @@ mod tests {
             assert!(taggy_after.tags.is_empty());
         });
     }
+    #[test]
+    fn it_removes_only_specified_tag_from_file() {
+        with_duplicate_file(get_audio_sample_file_path(), |path| {
+            // setup
+            let new_tag = Tag::builder().with_tag_type(TagType::Ape).create();
+            let taggy = write_all(path.clone(), vec![new_tag.clone()], false)
+                .expect("Failed to write a new tag");
+            assert_eq!(taggy.tags.len(), 2);
+            // act
+            let remove_result = remove_tag(path.clone(), new_tag.tag_type);
+            // assert
+            assert!(remove_result.is_ok());
+            let taggy_after_remove = read_all(path).expect("Failed to read tags");
+            assert_eq!(taggy_after_remove.tags.len(), 1);
+        });
+    }
+
     /*
      * Helper Functions
      */

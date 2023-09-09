@@ -281,17 +281,17 @@ class TaggyWire implements FlutterRustBridgeWireBase {
   void wire_remove_tag(
     int port_,
     ffi.Pointer<wire_uint_8_list> path,
-    ffi.Pointer<wire_Tag> tag,
+    int tag_type,
   ) {
     return _wire_remove_tag(
       port_,
       path,
-      tag,
+      tag_type,
     );
   }
 
-  late final _wire_remove_tagPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Tag>)>>('wire_remove_tag');
-  late final _wire_remove_tag = _wire_remove_tagPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_Tag>)>();
+  late final _wire_remove_tagPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>, ffi.Int32)>>('wire_remove_tag');
+  late final _wire_remove_tag = _wire_remove_tagPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, int)>();
 
   ffi.Pointer<ffi.Int32> new_box_autoadd_mime_type_0(
     int value,
