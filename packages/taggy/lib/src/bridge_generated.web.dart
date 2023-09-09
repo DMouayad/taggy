@@ -128,7 +128,7 @@ class TaggyWasmModule implements WasmModule {
 
   external dynamic /* void */ wire_remove_all(NativePortType port_, String path);
 
-  external dynamic /* void */ wire_remove_tag(NativePortType port_, String path, List<dynamic> tag);
+  external dynamic /* void */ wire_remove_tag(NativePortType port_, String path, int tag_type);
 }
 
 // Section: WASM wire connector
@@ -148,5 +148,5 @@ class TaggyWire extends FlutterRustBridgeWasmWireBase<TaggyWasmModule> {
 
   void wire_remove_all(NativePortType port_, String path) => wasmModule.wire_remove_all(port_, path);
 
-  void wire_remove_tag(NativePortType port_, String path, List<dynamic> tag) => wasmModule.wire_remove_tag(port_, path, tag);
+  void wire_remove_tag(NativePortType port_, String path, int tag_type) => wasmModule.wire_remove_tag(port_, path, tag_type);
 }

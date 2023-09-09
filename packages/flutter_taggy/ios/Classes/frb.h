@@ -84,7 +84,7 @@ void wire_write_primary(int64_t port_,
 
 void wire_remove_all(int64_t port_, struct wire_uint_8_list *path);
 
-void wire_remove_tag(int64_t port_, struct wire_uint_8_list *path, struct wire_Tag *tag);
+void wire_remove_tag(int64_t port_, struct wire_uint_8_list *path, int32_t tag_type);
 
 int32_t *new_box_autoadd_mime_type_0(int32_t value);
 

@@ -75,13 +75,14 @@ abstract class Taggy {
 
   FlutterRustBridgeTaskConstMeta get kRemoveAllConstMeta;
 
-  /// Delete the provided `tag` from file at the given `path`.
+  /// Deletes the `tag` with `TagType` equals to `tag_type` from file at the given `path`.
   ///
-  /// If the `tag` doesn't exist, **no** errors will be returned.
+  /// If the file doesn't have any tag with the given `tag_type`,
+  /// **no** errors will be returned.
   ///
   /// Throws an **exception** when:
   /// - path doesn't exists
-  Future<void> removeTag({required String path, required Tag tag, dynamic hint});
+  Future<void> removeTag({required String path, required TagType tagType, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRemoveTagConstMeta;
 }
@@ -445,16 +446,16 @@ class TaggyImpl implements Taggy {
         ],
       );
 
-  Future<void> removeTag({required String path, required Tag tag, dynamic hint}) {
+  Future<void> removeTag({required String path, required TagType tagType, dynamic hint}) {
     var arg0 = _platform.api2wire_String(path);
-    var arg1 = _platform.api2wire_box_autoadd_tag(tag);
+    var arg1 = api2wire_tag_type(tagType);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_remove_tag(port_, arg0, arg1),
       parseSuccessData: _wire2api_unit,
       constMeta: kRemoveTagConstMeta,
       argValues: [
         path,
-        tag
+        tagType
       ],
       hint: hint,
     ));
@@ -464,7 +465,7 @@ class TaggyImpl implements Taggy {
         debugName: "remove_tag",
         argNames: [
           "path",
-          "tag"
+          "tagType"
         ],
       );
 

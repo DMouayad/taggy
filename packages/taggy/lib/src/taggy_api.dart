@@ -12,7 +12,7 @@ final Taggy = TaggyInterface._();
 class TaggyInterface {
   TaggyInterface._();
 
-  late final bridge.Taggy? _api;
+  bridge.Taggy? _api;
 
   bridge.Taggy _getApi() {
     if (_api == null) {
@@ -86,7 +86,7 @@ class TaggyInterface {
   ///
   /// *Note:* the [tag.tagType] of the given [tag] will be overridden
   /// with the primary type of the file, so you can set it to any or use
-  /// [bridge.TagType.FilePrimaryType]
+  /// [TagType.FilePrimaryType]
   ///
   /// Throws an **exception** when:
   /// - path doesn't exists
@@ -107,14 +107,17 @@ class TaggyInterface {
     return await _getApi().removeAll(path: path);
   }
 
-  /// Delete the provided [tag] from file at the given `path`.
+  /// Deletes the tag with [TagType] equals to [tagType] from file at the given [path].
   ///
-  /// If the [tag] doesn't exist, **no** errors will be returned.
+  /// If the file doesn't have any tag with the given [tagType],
+  /// **no** errors will be returned.
   ///
   /// Throws an **exception** when:
   /// - path doesn't exists
-  Future<void> removeTag(
-      {required String path, required bridge.Tag tag}) async {
-    return await _getApi().removeTag(path: path, tag: tag);
+  Future<void> removeTag({
+    required String path,
+    required bridge.TagType tagType,
+  }) async {
+    return await _getApi().removeTag(path: path, tagType: tagType);
   }
 }
