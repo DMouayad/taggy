@@ -6,5 +6,3 @@ import 'package:taggy/src/bridge_generated.dart';
 typedef ExternalLibrary = Object;
 
 Taggy createWrapperImpl(ExternalLibrary lib) => throw UnimplementedError();
-
-Object createLibraryImpl([String? libPath]) => throw UnimplementedError();
