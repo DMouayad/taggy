@@ -3,12 +3,11 @@ import 'package:taggy/src/ffi.dart';
 
 import 'bridge_generated.dart' as bridge;
 
+// This Provides a public API for Dart clients to call native library through
+// ffi.
 // ignore: non_constant_identifier_names
 final Taggy = TaggyInterface._();
 
-///
-// This Provides a public API for Dart clients to call the platform-specific
-// native library.
 class TaggyInterface {
   TaggyInterface._();
 
