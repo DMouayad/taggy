@@ -10,18 +10,25 @@ final Taggy = TaggyInterface._();
 // This Provides a public API for Dart clients to call the platform-specific
 // native library.
 class TaggyInterface {
-  late final bridge.Taggy _api;
-  bool _initialized = false;
-
   TaggyInterface._();
+
+  late final bridge.Taggy? _api;
+
+  bridge.Taggy _getApi() {
+    if (_api == null) {
+      throw StateError(
+        'Taggy has not been initialized!\n'
+        'Help: call Taggy.initialize() in your main function',
+      );
+    }
+    return _api!;
+  }
 
   /// Initializes Taggy. **Must** be called before usage.
   ///
   /// You need to provide the dynamic [library] based on your OS.
   void initializeFrom(ExternalLibrary library) {
-    if (_initialized) return;
-    _api = createLib(library);
-    _initialized = true;
+    _api ??= createLib(library);
   }
 
   /// Read all audio tags from the file at given [path].
@@ -29,7 +36,7 @@ class TaggyInterface {
   /// Throws an **exception** when:
   /// - path doesn't exists
   Future<bridge.TaggyFile> readAll(String path) async {
-    return await _api.readAll(path: path);
+    return await _getApi().readAll(path: path);
   }
 
   /// Read only the primary audio tag from the file at given [path].
@@ -41,7 +48,7 @@ class TaggyInterface {
   /// - path doesn't exists
   /// ```
   Future<bridge.TaggyFile> readPrimary(String path) async {
-    return await _api.readPrimary(path: path);
+    return await _getApi().readPrimary(path: path);
   }
 
   /// Read any audio tag from the file at the given [path].
@@ -53,7 +60,7 @@ class TaggyInterface {
   /// - path doesn't exists
   /// ```
   Future<bridge.TaggyFile> readAny(String path) async {
-    return await _api.readAny(path: path);
+    return await _getApi().readAny(path: path);
   }
 
   /// Write all provided `tags` to the file at given [path].
@@ -68,8 +75,8 @@ class TaggyInterface {
     required List<bridge.Tag> tags,
     required bool overrideExistent,
   }) async {
-    return await _api.writeAll(
-        path: path, tags: tags, overrideExistent: overrideExistent);
+    return await _getApi()
+        .writeAll(path: path, tags: tags, overrideExistent: overrideExistent);
   }
 
   /// Write the provided `tag` as the primary tag for the file at given [path].
@@ -88,8 +95,8 @@ class TaggyInterface {
     required bridge.Tag tag,
     required bool keepOthers,
   }) async {
-    return await _api.writePrimary(
-        path: path, tag: tag, keepOthers: keepOthers);
+    return await _getApi()
+        .writePrimary(path: path, tag: tag, keepOthers: keepOthers);
   }
 
   /// Delete all tags from file at given [path]
@@ -97,7 +104,7 @@ class TaggyInterface {
   /// Throws an **exception** when:
   /// - path doesn't exists
   Future<void> removeAll(String path) async {
-    return await _api.removeAll(path: path);
+    return await _getApi().removeAll(path: path);
   }
 
   /// Delete the provided [tag] from file at the given `path`.
@@ -108,6 +115,6 @@ class TaggyInterface {
   /// - path doesn't exists
   Future<void> removeTag(
       {required String path, required bridge.Tag tag}) async {
-    return await _api.removeTag(path: path, tag: tag);
+    return await _getApi().removeTag(path: path, tag: tag);
   }
 }
