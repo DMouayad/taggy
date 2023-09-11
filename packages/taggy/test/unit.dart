@@ -1,6 +1,3 @@
-import 'dart:ffi';
-import 'dart:io';
-
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:taggy/taggy.dart';
 import 'package:test/test.dart';
@@ -12,7 +9,11 @@ const audioSampleFilePath = './test_samples/sample.mp3';
 const notTagsAudioFilePath = './test_samples/no_tags.mp3';
 
 void main() {
-  setUpAll(() => Taggy.initializeFrom(_getTaggyDylib()));
+  setUpAll(() {
+    Taggy.initializeFrom(
+      getTaggyDylibFromDirectory('../../target/debug'),
+    );
+  });
 
   group(
     'Reading audio tags',
@@ -176,23 +177,4 @@ Future<Tag> _addTagToFile(String path, TagType tagType) async {
       await Taggy.writeAll(path: path, tags: [tag], overrideExistent: false);
   return taggyFile.tags
       .firstWhere((element) => element.trackTitle == tag.trackTitle);
-}
-
-/// Loads the external library from a local binary file.
-///
-/// Make sure you have run `cargo build` at least once.
-DynamicLibrary _getTaggyDylib() {
-  const libName = 'taggy';
-  final libPrefix = {
-    Platform.isWindows: '',
-    Platform.isMacOS: 'lib',
-    Platform.isLinux: 'lib',
-  }[true]!;
-  final libSuffix = {
-    Platform.isWindows: 'dll',
-    Platform.isMacOS: 'dylib',
-    Platform.isLinux: 'so',
-  }[true]!;
-  final dylibPath = '../../target/debug/$libPrefix$libName.$libSuffix';
-  return loadLibForDart(dylibPath);
 }
