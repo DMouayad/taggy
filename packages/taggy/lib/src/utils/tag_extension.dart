@@ -40,4 +40,39 @@ extension TagExtension on bridge.Tag {
       year: year ?? this.year,
     );
   }
+
+  String formatAsAString() {
+    return ''' 
+      Tag(
+          tagType: ${tagType.name},
+          trackTitle: $trackTitle,
+          trackArtist: $trackArtist,
+          trackNumber: $trackNumber,
+          trackTotal: $trackTotal,
+          discTotal: $discTotal,
+          discNumber: $discNumber,
+          album: $album,
+          albumArtist: $albumArtist,
+          genre: $genre,
+          language: $language,
+          year: $year,
+          recordingDate: $recordingDate,
+          originalReleaseDate: $originalReleaseDate,
+          has lyrics: ${lyrics?.isNotEmpty ?? false},
+          pictures: {
+            count: ${pictures.length},
+            items: ${pictures.map((p) {
+      return '''Picture(
+                  picType: ${p.picType},
+                  picData(Bytes): ${p.picData.buffer.lengthInBytes},
+                  mimeType: ${p.mimeType},
+                  width: ${p.width},
+                  height: ${p.height},
+                  colorDepth: ${p.colorDepth},
+                  numColors: ${p.numColors},
+            ), ''';
+    }).toList()},
+          },
+      )''';
+  }
 }

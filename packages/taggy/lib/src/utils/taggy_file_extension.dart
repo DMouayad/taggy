@@ -1,3 +1,5 @@
+import 'package:taggy/src/utils/tag_extension.dart';
+
 import '../bridge_generated.dart' as bridge;
 
 extension TaggyFileExtension on bridge.TaggyFile {
@@ -35,38 +37,7 @@ extension TaggyFileExtension on bridge.TaggyFile {
       primaryTagType: $primaryTagType,
       tags: {
          count: ${tags.length},
-         items: ${tags.map((e) => ''' Tag(
-          tagType: ${e.tagType.name},
-          trackTitle: ${e.trackTitle},
-          trackArtist: ${e.trackArtist},
-          trackNumber: ${e.trackNumber},
-          trackTotal: ${e.trackTotal},
-          discTotal: ${e.discTotal},
-          discNumber: ${e.discNumber},
-          album: ${e.album},
-          albumArtist: ${e.albumArtist},
-          genre: ${e.genre},
-          language: ${e.language},
-          year: ${e.year},
-          recordingDate: ${e.recordingDate},
-          originalReleaseDate: ${e.originalReleaseDate},
-          has lyrics: ${e.lyrics?.isNotEmpty ?? false},
-          pictures: {
-            count: ${e.pictures.length},
-            items: ${e.pictures.map((p) {
-              return '''
-              Picture(
-                picType: ${p.picType},
-                picData(Bytes): ${p.picData.buffer.lengthInBytes},
-                mimeType: ${p.mimeType},
-                width: ${p.width},
-                height: ${p.height},
-                colorDepth: ${p.colorDepth},
-                numColors: ${p.numColors},
-              )''';
-            }).toList()},
-          },
-        )''').toList()},
+         items: ${tags.map((e) => '\n\t${e.formatAsAString()}').toList()},
       },
       audio: AudioInfo(
         channelMask: ${audio.channelMask},
