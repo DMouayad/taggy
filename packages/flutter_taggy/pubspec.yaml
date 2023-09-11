@@ -13,7 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.0.2
-  taggy: ^1.0.0
+  taggy: ^0.1.0
 
 dev_dependencies:
   ffi: ^2.0.1
@@ -21,8 +21,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
-  integration_test:
-    sdk: flutter
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

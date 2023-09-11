@@ -1,40 +1,35 @@
-<p align="center">
+<div align="center">
 
-
+<a href="https://github.com/DMouayad/taggy/releases"><img src="https://img.shields.io/github/v/release/DMouayad/taggy?style=flat-square&color=blue" alt="Release"></a>
 <a href="https://github.com/DMouayad/taggy/actions"><img src="https://img.shields.io/github/actions/workflow/status/DMouayad/taggy/.github%2Fworkflows%2Fbuild.yaml" alt="Build Status"></a>
 <a href="https://github.com/DMouayad/taggy"><img src="https://img.shields.io/github/stars/DMouayad/taggy.svg?style=flat&logo=github&colorB=deeppink&label=stars" alt="Github Stars"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="MIT License"></a>
-</p>
+</div>
 
+![](readme-assets/Taggy%20cover.png)
 
 Provides a simple API for reading, writing and converting audio tags.
 
----
-
 ## Features
 
----
+- 📖 [Reading audio tags metadata from file](#reading-tags).
+- 📝 [Writing audio tags](#writing-tags).
+- ✂  [Removing audio tags](#removing-tags).
+- 🎶 Supports a variety of [file formats](https://github.com/Serial-ATA/lofty-rs/blob/main/SUPPORTED_FORMATS.md):
+  MP3, MP4, FLAC, and more.
 
+### Planned features ⏳
 
-- 📖 [Reading audio tags metadata from file.](#reading-tags)
-- 📝 [Writing audio tags.](#writing-tags)
-- ✂ [Removing audio tags.](#removing-tags)
-- 🎶 Supports multiple file formats: (MP3, MP4, FLAC, ...), A full list can be found [below](#lofty-)
-- ⏳ And much more [planned features]().
+- Batches: write to multiple files at the same time.
+- Editing file name: add the option to rename a file based on its track title.
 
 ## Getting started
 
----
-
-
-- Install the package.
+- Install & Setup the package.
 - Read the [Usage](#usage) section to explore `Taggy`'s features.
 - Check out the example app for more details.
 
 ## Installation
-
----
-
 
 Add `taggy` as a dependency in your `pubspec.yaml`:
 
@@ -60,147 +55,172 @@ Run the following command:
 
 ## Usage
 
----
-
 ### Initialization
 
-```dart
-import 'package:taggy/taggy.dart';
+- In **Dart**:
 
-void main(){
-  // add this line before using [Taggy]
-  Taggy.initialize();
+  ```dart
+  import 'package:taggy/taggy.dart';
   
-  // build something cool 
-}
+  void main(){
+    Taggy.initializeFrom(DynamicLibrary.open('path/to/library.dll'));
+    // OR
+    // call [getTaggyDylibFromDirectory] to take care of loading the library for you.
+    // 
+    Taggy.initializeFrom(getTaggyDylibFromDirectory('path/of/binaries/directory'));
+  
+    // Now you can use [Taggy] & remember always build something cool 
+  }
   ```
 
+- In **Flutter**:
+
+  ```dart
+  import 'package:flutter_taggy/flutter_taggy.dart';
+  
+  void main(){
+    // add this line before using [Taggy]
+    // for the Flutter package, we don't have to pass the dynamic library 
+    // since it'll be automatically fetched from Github then loaded for us.
+    Taggy.initialize();
+    
+    // build something cool 
+  }
+  ```
+
+### About `TaggyFile`
+
+- It's a type, obviously, returned by all of `Taggy`'s functions except the ones which remove some tag(s).
+- It gives us a little more information about the file we're reading, Alongside the list of `Tag`, 
+  we get:
+  - a `FileType`: whether it's (flac, wav, mpeg, etc).
+  - The size in bytes.
+  - an `AudioInfo` which is the properties of the audio track.
+
+
+- example:
+  
+  ```dart
+    // we acquire an instance returned by some method. 
+    final TaggyFile taggyFile = await Taggy.readAll('path/to/file.flac');
+    // you can pretty-print a [TaggyFile] instance by calling [formatAsASrting()].
+    print(taggyFile.formatAsString()); // check out the output below 🔽
+  ```
+  
+  <details>
+          <summary>example output</summary>
+
+      ```
+      TaggyFile: {
+          size: 12494053 bytes ~ 12.2 MB,
+          fileType: FileType.Mpeg
+          primaryTagType: TagType.Id3v2,
+          tags: {
+          count: 1,
+          items: 
+            [ Tag(
+                  tagType: Id3v2,
+                  trackTitle: Fine Line,
+                  trackArtist: Eminem,
+                  trackNumber: 9,
+                  trackTotal: 1,
+                  discTotal: null,
+                  discNumber: null,
+                  album: SHADYXV,
+                  albumArtist: Various Artists,
+                  genre: null,
+                  language: null,
+                  year: null,
+                  recordingDate: null,
+                  originalReleaseDate: null,
+                  has lyrics: true,
+                  pictures: {
+                    count: 1,
+                    items: [ Picture(
+                      picType: PictureType.CoverFront,
+                      picData(Bytes): 168312,
+                      mimeType: MimeType.Jpeg,
+                      width: 1000,
+                      height: 1000,
+                      colorDepth: 24,
+                      numColors: 0,
+                      )],
+                  },
+                ),
+            ],
+          },
+          audio: AudioInfo(
+          channelMask: 3,
+          channels: 2,
+          sampleRate: 44100,
+          audioBitrate: 321,
+          overallBitrate: 326,
+          bitDepth: null,
+          durationSec: 306,
+          ),
+      }
+      ```
+
+      </details>
+
 ### Reading tags
+
+- **Reading all tags:**
+  
+    ```dart
+    const path = 'path/to/audio/file.mp3';
+
+    final TaggyFile taggyFile = await Taggy.readAll(path);
+    // you can use the getter which, under the hood, is [taggyFile.tags.firstOrNull]
+    print(taggyFile.firstTagIfAny);
+  
+    // or easily access all returned tags
+    for (var tag in taggyFile.tags) {
+      print(tag.tagType);
+    }
+    ```
 
 - **Reading primary tag:**
 
     ```dart
-      final path = "path/to/audio/file.mp3";
-      final taggyFile = await Taggy.readPrimary(path);
-      
-      // you can use [formatAsString] to pretty-print the file instance.
-      print(taggyFile.formatAsString());
-      // check out the output below 🔽
+    final path = 'path/to/audio/file.mp3';
+    final TaggyFile taggyFile = await Taggy.readPrimary(path);
     ```
 
-    <details>
-        <summary>example output</summary>
-
-    ```
-    TaggyFile: {
-        size: 12494053 bytes ~ 12.2 MB,
-        fileType: FileType.Mpeg
-        primaryTagType: TagType.Id3v2,
-        tags: {
-        count: 1,
-        items: 
-          [ Tag(
-                tagType: Id3v2,
-                trackTitle: Fine Line,
-                trackArtist: Eminem,
-                trackNumber: 9,
-                trackTotal: 1,
-                discTotal: null,
-                discNumber: null,
-                album: SHADYXV,
-                albumArtist: Various Artists,
-                genre: null,
-                language: null,
-                year: null,
-                recordingDate: null,
-                originalReleaseDate: null,
-                has lyrics: true,
-                pictures: {
-                  count: 1,
-                  items: [ Picture(
-                    picType: PictureType.CoverFront,
-                    picData(Bytes): 168312,
-                    mimeType: MimeType.Jpeg,
-                    width: 1000,
-                    height: 1000,
-                    colorDepth: 24,
-                    numColors: 0,
-                    )],
-                },
-              ),
-          ],
-        },
-        audio: AudioInfo(
-        channelMask: 3,
-        channels: 2,
-        sampleRate: 44100,
-        audioBitrate: 321,
-        overallBitrate: 326,
-        bitDepth: null,
-        durationSec: 306,
-        ),
-    }
-    ```
-
-</details>
-
-- **Reading all tags:**
-
-    <br/>
-  
-    It's similar to `readPrimary` but the returned `TaggyFile.tags` may contain more than one item depending on the file. 
-
-    ```dart
-      const path = "path/to/audio/file.mp3";
-      final taggyFile = await Taggy.readAll(path);
-    
-      // you can also use [formatAsString], we still get a [TaggyFile].
-      print(taggyFile.formatAsString());
-    
-      // easily access the tags
-      for (var tag in taggyFile.tags) {
-        print(tag.tagType);
-      }
-    ```
 
 - **Reading any tag:**
-
-  <br/>
   
   It's similar to `readPrimary` except that the returned `TaggyFile.tags` might be empty.
 
     ```dart
-      const path = "path/to/audio/file.mp3";
-      final taggyFile = await Taggy.readyAny(path);
-    
-      // you can also use [formatAsString], we still get a [TaggyFile].
-      print(taggyFile.formatAsString());
-    
-      // you may want to check if it has any tags
-      final hasTags = taggyFile.tags.isNotEmpty();
-      // Or use the getter
-      final Tag? tag = taggyFile.firstTagIfAny;
+    const path = 'path/to/audio/file.mp3';
+    final TaggyFile taggyFile = await Taggy.readyAny(path);
+  
+    // you can also use [formatAsString], we still get a [TaggyFile].
+    print(taggyFile.formatAsString());
+  
+    // you may want to check if it has any tags
+    final hasTags = taggyFile.tags.isNotEmpty();
+    // Or use the getter
+    final Tag? tag = taggyFile.firstTagIfAny;
     ```
 
 ### Writing tags:
 
 - **Note #1: Specifying the `TagType`**
 
-  A tag type is required for creating a new `Tag` instance.
-
   >  if you know what type to provide: you can skip this note.
   
-    else you can:
+  A tag type is required for creating a new `Tag` instance.
+  You can:
   
     -  check what `TagType` the file supports based on its type(extension). see this [table](https://github.com/Serial-ATA/lofty-rs/blob/main/SUPPORTED_FORMATS.md).
 
-    -  use the function `Taggy.writePrimary()`
+    -  Use the function `Taggy.writePrimary()`
       and pass it a `Tag` with a type of `TagType.FilePrimaryType`, as shown in example below.
 
 
-   <br/>
-
-  - <details> 
+- <details> 
   
     <summary>creating a new Tag</summary>
       
@@ -237,59 +257,61 @@ void main(){
 - **Writing primary tag:**
 
   ```dart
-  
-    final path = "path/to/audio/file.mp3";
-    // Create a new [Tag] instance.
-    // unfold the [creating new Tag] section to find this method
-    final tagToWrite = getTagInstance(TagType.FilePrimaryType);
+  final path = 'path/to/audio/file.mp3';
+  // unfold the [creating a new Tag] section above to find [getTagInstance]
+  final tagToWrite = getTagInstance(TagType.FilePrimaryType);
 
-    final taggyFile = await Taggy.writePrimary(
-      path: path, tag: tagToWrite, keepOthers: false);
+  final TaggyFile taggyFile = await Taggy.writePrimary(
+    path: path, tag: tagToWrite, keepOthers: false);
 
-    // On Success, [taggyFile.tags] will contain the newly added tag.
-    // NOTE: this tag may not contain the same properties of [tagToWrite].
-    final pTag = taggyFile.primaryTag;
-  
+  // On Success, [taggyFile.tags] will contain the newly added tag.
+  // NOTE: this tag may not contain the same properties of [tagToWrite].
+  final pTag = taggyFile.primaryTag;
   ```
-<br/>
 
 - **Writing multiple tags**:
-
-  <br/>
   
-  Normally you'll use `Taggy.writePrimary()` to add/edit an audio tag metadata,
+  In most use-cases, you'll use `Taggy.writePrimary()` to add/edit an audio tag metadata,
   but you can also provide multiple tags to be written to the same file.
 
   ```dart
-  
-    final path = "path/to/audio/file.mp3";
-    // In the same way as the previous example,
-    // create a list of [Tag] instances.
-   final tags = [
-      getTagInstance(TagType.FilePrimaryType),
-      getTagInstance(TagType.Id3v1)
-    ];
+  final path = 'path/to/audio/file.mp3';
+  // In the same way as the previous example,
+  // create a list of [Tag] instances.
+  final tags = [
+    getTagInstance(TagType.FilePrimaryType),
+    getTagInstance(TagType.Id3v1),
+  ];
       
-    final taggyFile = await Taggy.writeAll(
-      path: path, tag: tagToWrite, overrideExistent: true);
-  
+  final TaggyFile taggyFile = await Taggy.writeAll(
+    path: path, tag: tagToWrite, overrideExistent: true);
   ```
 
 ### Removing tags:
 
-- **Remove a specific `Tag`**:
+- **Remove a specific Tag**:
+  
+  You can delete a tag from file by specifying this tag type.
 
-  <br/>
+    ```dart
+    final path = 'path/to/audio/file.mp3';
+    // The type of to-remove-tag
+    final tagType = TagType.Ape;
+    final TaggyFile taggyFile = await Taggy.removeTag(path: path, tagType: tagType);
+    ``` 
+
+- **Remove all tags**:
 
   ```dart
-    final path = "path/to/audio/file.mp3";
-    
-    final taggyFile = await Taggy.removeTag(path: path, tag: tag);
-  ```
+  final path = 'path/to/audio/file.mp3';
+  final TaggyFile taggyFile = await Taggy.removeAll(path: path);
+  
+  print(taggyFile.tags);
+  // output
+  // []
+  ``` 
 
 ## Feed back & Contributions
-
----
 
 - 🐛 Found an issue or encountered a bug? please check the existing [issues](https://github.com/DMouayad/taggy/issues) or create a new one.
 
@@ -302,16 +324,6 @@ the [Contributing](CONTRIBUTING.md) guide.
 
 ## Acknowledgement
 
----
+- [**lofty**](https://github.com/Serial-ATA/lofty-rs/): a Rust library which provides `Taggy` with its functionality.
 
-
-#### [lofty:](https://github.com/Serial-ATA/lofty-rs/)
-  
-  a Rust library which provides `Taggy` with its functionality.
-  So you can find the **supported formats** by `lofty & taggy` [here](https://github.com/Serial-ATA/lofty-rs/blob/main/SUPPORTED_FORMATS.md).
-
-
-#### [Flutter Rust Bridge:](https://github.com/fzyzcjy/flutter_rust_bridge)
-
-  connects `Rust` APIs with Dart & Flutter.
-  
+- [**Flutter Rust Bridge**](https://github.com/fzyzcjy/flutter_rust_bridge): connects `Rust` APIs with Dart & Flutter.
