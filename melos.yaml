@@ -4,7 +4,7 @@ repository: https://github.com/DMouayad/taggy
 
 packages:
   - packages/*
-
+  - packages/*/example
 scripts:
   analyze:
     exec: flutter analyze .
