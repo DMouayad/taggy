@@ -13,6 +13,7 @@ dependencies:
   flutter_rust_bridge: ^1.81.0
   meta: ^1.9.1
   path: ^1.8.0
+  uuid: ^3.0.7
 
 dev_dependencies:
   ffigen: '>=8.0.0 <9.0.0'
