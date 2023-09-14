@@ -1,12 +1,14 @@
 <div align="center">
 
+<a href="https://pub.dartlang.org/packages/taggy"><img alt="taggy" src="https://img.shields.io/pub/v/taggy"></a>
+<a href="https://pub.dartlang.org/packages/flutter_taggy"><img alt="flutter_taggy" src="https://img.shields.io/pub/v/flutter_taggy"></a>
 <a href="https://github.com/DMouayad/taggy/releases"><img src="https://img.shields.io/github/v/release/DMouayad/taggy?style=flat-square&color=blue" alt="Release"></a>
 <a href="https://github.com/DMouayad/taggy/actions"><img src="https://img.shields.io/github/actions/workflow/status/DMouayad/taggy/.github%2Fworkflows%2Fbuild.yaml" alt="Build Status"></a>
 <a href="https://github.com/DMouayad/taggy"><img src="https://img.shields.io/github/stars/DMouayad/taggy.svg?style=flat&logo=github&colorB=deeppink&label=stars" alt="Github Stars"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="MIT License"></a>
 </div>
 
-![](readme-assets/Taggy%20cover.png)
+![taggy cover image](readme-assets/Taggy%20cover.png)
 
 Provides a simple API for reading, writing and converting audio tags.
 
@@ -22,23 +24,18 @@ Provides a simple API for reading, writing and converting audio tags.
 
 - Batches: write to multiple files at the same time.
 - Editing file name: add the option to rename a file based on its track title.
+- TaggyFileResult: all public APIs should return a universal result:
+
+  It will contain a value of `TaggyFile` type or a `TaggyError`.
 
 ## Getting started
 
 - Install & Setup the package.
-- Read the [Usage](#usage) section to explore `Taggy`'s features.
-- Check out the example app for more details.
+- Read the [Usage](#usage) section to explore *Taggy*'s features.
+- For more details: check out the [Dart example](packages/taggy/example/README.md)
+  and [Flutter example](packages/flutter_taggy/example/README.md) apps.
 
 ## Installation
-
-Add `taggy` as a dependency in your `pubspec.yaml`:
-
-```yaml
-  dependencies:
-    taggy: ^0.1.0
-```
-
-*or*
 
 Run the following command:
 
@@ -64,14 +61,17 @@ Run the following command:
   
   void main(){
     Taggy.initializeFrom(DynamicLibrary.open('path/to/library.dll'));
-    // OR
-    // call [getTaggyDylibFromDirectory] to take care of loading the library for you.
-    // 
-    Taggy.initializeFrom(getTaggyDylibFromDirectory('path/of/binaries/directory'));
-  
-    // Now you can use [Taggy] & remember always build something cool 
   }
   ```
+  
+  Or
+  
+  ```dart
+    import 'package:taggy/taggy.dart';
+  
+    // call this helper function which takes care of loading the library for you.
+    Taggy.initializeFrom(getTaggyDylibFromDirectory('path/of/binaries/directory'));
+    ```
 
 - In **Flutter**:
 
@@ -79,89 +79,79 @@ Run the following command:
   import 'package:flutter_taggy/flutter_taggy.dart';
   
   void main(){
-    // add this line before using [Taggy]
-    // for the Flutter package, we don't have to pass the dynamic library 
-    // since it'll be automatically fetched from Github then loaded for us.
+    // When using the Flutter package, we don't have to pass the dynamic library 
+    // ourselves but it'll be automatically fetched then loaded for us.
+    // So You only need to add the following line.
     Taggy.initialize();
     
-    // build something cool 
+    // build something cool
   }
   ```
 
-### About `TaggyFile`
+### About the `TaggyFile` type
 
-- It's a type, obviously, returned by all of `Taggy`'s functions except the ones which remove some tag(s).
-- It gives us a little more information about the file we're reading, Alongside the list of `Tag`, 
+- It gives us a little more information about the file(s) we're reading from or writing to, so alongside the list of `Tag`, 
   we get:
+  - the file size (in bytes).
   - a `FileType`: whether it's (flac, wav, mpeg, etc).
-  - The size in bytes.
-  - an `AudioInfo` which is the properties of the audio track.
-
-
-- example:
-  
-  ```dart
-    // we acquire an instance returned by some method. 
-    final TaggyFile taggyFile = await Taggy.readAll('path/to/file.flac');
-    // you can pretty-print a [TaggyFile] instance by calling [formatAsASrting()].
-    print(taggyFile.formatAsString()); // check out the output below 🔽
-  ```
+  - an `AudioInfo`, which is another type, holds the properties of the audio track.
+- you can pretty-print a `TaggyFile` instance by calling `formatAsAString()`:
   
   <details>
-          <summary>example output</summary>
+  <summary>output example</summary>
 
-      ```
-      TaggyFile: {
-          size: 12494053 bytes ~ 12.2 MB,
-          fileType: FileType.Mpeg
-          primaryTagType: TagType.Id3v2,
-          tags: {
-          count: 1,
-          items: 
-            [ Tag(
-                  tagType: Id3v2,
-                  trackTitle: Fine Line,
-                  trackArtist: Eminem,
-                  trackNumber: 9,
-                  trackTotal: 1,
-                  discTotal: null,
-                  discNumber: null,
-                  album: SHADYXV,
-                  albumArtist: Various Artists,
-                  genre: null,
-                  language: null,
-                  year: null,
-                  recordingDate: null,
-                  originalReleaseDate: null,
-                  has lyrics: true,
-                  pictures: {
-                    count: 1,
-                    items: [ Picture(
-                      picType: PictureType.CoverFront,
-                      picData(Bytes): 168312,
-                      mimeType: MimeType.Jpeg,
-                      width: 1000,
-                      height: 1000,
-                      colorDepth: 24,
-                      numColors: 0,
-                      )],
-                  },
-                ),
-            ],
-          },
-          audio: AudioInfo(
-          channelMask: 3,
-          channels: 2,
-          sampleRate: 44100,
-          audioBitrate: 321,
-          overallBitrate: 326,
-          bitDepth: null,
-          durationSec: 306,
-          ),
-      }
-      ```
+  ```
+  TaggyFile: {
+      size: 12494053 bytes ~ 12.2 MB,
+      fileType: FileType.Mpeg
+      primaryTagType: TagType.Id3v2,
+      tags: {
+      count: 1,
+      items: 
+        [ Tag(
+              tagType: Id3v2,
+              trackTitle: Fine Line,
+              trackArtist: Eminem,
+              trackNumber: 9,
+              trackTotal: 1,
+              discTotal: null,
+              discNumber: null,
+              album: SHADYXV,
+              albumArtist: Various Artists,
+              genre: null,
+              language: null,
+              year: null,
+              recordingDate: null,
+              originalReleaseDate: null,
+              has lyrics: true,
+              pictures: {
+                count: 1,
+                items: [ Picture(
+                  picType: PictureType.CoverFront,
+                  picData(Bytes): 168312,
+                  mimeType: MimeType.Jpeg,
+                  width: 1000,
+                  height: 1000,
+                  colorDepth: 24,
+                  numColors: 0,
+                  )],
+              },
+            ),
+        ],
+      },
+      audio: AudioInfo(
+      channelMask: 3,
+      channels: 2,
+      sampleRate: 44100,
+      audioBitrate: 321,
+      overallBitrate: 326,
+      bitDepth: null,
+      durationSec: 306,
+      ),
+  }
+  ```
 
-      </details>
+</details>
 
 ### Reading tags
 
@@ -207,9 +197,7 @@ Run the following command:
 
 ### Writing tags:
 
-- **Note #1: Specifying the `TagType`**
-
-  >  if you know what type to provide: you can skip this note.
+- **About specifying the `TagType`**
   
   A tag type is required for creating a new `Tag` instance.
   You can:
@@ -222,7 +210,7 @@ Run the following command:
 
 - <details> 
   
-    <summary>creating a new Tag</summary>
+    <summary>Example of creating a new Tag</summary>
       
     ```dart
     Tag getTagInstance(TagType tagType){
@@ -320,7 +308,7 @@ Run the following command:
 the [Contributing](CONTRIBUTING.md) guide.
 
 
-- 🙏🏻 You can also help us if you ⭐ this repository and 👍🏻 the [package](https://pub.dev/packages/taggy) on `Pub.dev`, we do appreciate your love. 
+- 🙏🏻 You can also contribute if you ⭐ this repository and 👍🏻 the [package](https://pub.dev/packages/taggy) on `Pub.dev`, we do appreciate your love. 
 
 ## Acknowledgement
 
