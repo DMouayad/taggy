@@ -6,7 +6,7 @@ on:
     branches:
       - main
   schedule:
-     runs the CI everyday at 10AM
+    # runs the CI everyday at 10AM
     - cron: "0 10 * * *"
 
 jobs:
