@@ -10,7 +10,8 @@ import 'package:uuid/uuid.dart';
 import 'bridge_generated.dart';
 export 'bridge_generated.dart';
 
-class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire> with FlutterRustBridgeSetupMixin {
+class TaggyPlatform extends FlutterRustBridgeBase<TaggyWire>
+    with FlutterRustBridgeSetupMixin {
   TaggyPlatform(FutureOr<WasmModule> dylib) : super(TaggyWire(dylib)) {
     setupMixinConstructor();
   }
@@ -118,35 +119,50 @@ class TaggyWasmModule implements WasmModule {
   external TaggyWasmModule bind(dynamic thisArg, String moduleName);
   external dynamic /* void */ wire_read_all(NativePortType port_, String path);
 
-  external dynamic /* void */ wire_read_primary(NativePortType port_, String path);
+  external dynamic /* void */ wire_read_primary(
+      NativePortType port_, String path);
 
   external dynamic /* void */ wire_read_any(NativePortType port_, String path);
 
-  external dynamic /* void */ wire_write_all(NativePortType port_, String path, List<dynamic> tags, bool override_existent);
+  external dynamic /* void */ wire_write_all(NativePortType port_, String path,
+      List<dynamic> tags, bool override_existent);
 
-  external dynamic /* void */ wire_write_primary(NativePortType port_, String path, List<dynamic> tag, bool keep_others);
+  external dynamic /* void */ wire_write_primary(
+      NativePortType port_, String path, List<dynamic> tag, bool keep_others);
 
-  external dynamic /* void */ wire_remove_all(NativePortType port_, String path);
+  external dynamic /* void */ wire_remove_all(
+      NativePortType port_, String path);
 
-  external dynamic /* void */ wire_remove_tag(NativePortType port_, String path, int tag_type);
+  external dynamic /* void */ wire_remove_tag(
+      NativePortType port_, String path, int tag_type);
 }
 
 // Section: WASM wire connector
 
 class TaggyWire extends FlutterRustBridgeWasmWireBase<TaggyWasmModule> {
-  TaggyWire(FutureOr<WasmModule> module) : super(WasmModule.cast<TaggyWasmModule>(module));
+  TaggyWire(FutureOr<WasmModule> module)
+      : super(WasmModule.cast<TaggyWasmModule>(module));
 
-  void wire_read_all(NativePortType port_, String path) => wasmModule.wire_read_all(port_, path);
+  void wire_read_all(NativePortType port_, String path) =>
+      wasmModule.wire_read_all(port_, path);
 
-  void wire_read_primary(NativePortType port_, String path) => wasmModule.wire_read_primary(port_, path);
+  void wire_read_primary(NativePortType port_, String path) =>
+      wasmModule.wire_read_primary(port_, path);
 
-  void wire_read_any(NativePortType port_, String path) => wasmModule.wire_read_any(port_, path);
+  void wire_read_any(NativePortType port_, String path) =>
+      wasmModule.wire_read_any(port_, path);
 
-  void wire_write_all(NativePortType port_, String path, List<dynamic> tags, bool override_existent) => wasmModule.wire_write_all(port_, path, tags, override_existent);
+  void wire_write_all(NativePortType port_, String path, List<dynamic> tags,
+          bool override_existent) =>
+      wasmModule.wire_write_all(port_, path, tags, override_existent);
 
-  void wire_write_primary(NativePortType port_, String path, List<dynamic> tag, bool keep_others) => wasmModule.wire_write_primary(port_, path, tag, keep_others);
+  void wire_write_primary(NativePortType port_, String path, List<dynamic> tag,
+          bool keep_others) =>
+      wasmModule.wire_write_primary(port_, path, tag, keep_others);
 
-  void wire_remove_all(NativePortType port_, String path) => wasmModule.wire_remove_all(port_, path);
+  void wire_remove_all(NativePortType port_, String path) =>
+      wasmModule.wire_remove_all(port_, path);
 
-  void wire_remove_tag(NativePortType port_, String path, int tag_type) => wasmModule.wire_remove_tag(port_, path, tag_type);
+  void wire_remove_tag(NativePortType port_, String path, int tag_type) =>
+      wasmModule.wire_remove_tag(port_, path, tag_type);
 }

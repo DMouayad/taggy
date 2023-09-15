@@ -13,7 +13,8 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:uuid/uuid.dart';
-import 'bridge_generated.io.dart' if (dart.library.html) 'bridge_generated.web.dart';
+import 'bridge_generated.io.dart'
+    if (dart.library.html) 'bridge_generated.web.dart';
 
 abstract class Taggy {
   /// Read all audio tags from the file at given `path`.
@@ -50,7 +51,11 @@ abstract class Taggy {
   ///
   /// Throws an **exception** when:
   /// - path doesn't exists
-  Future<TaggyFile> writeAll({required String path, required List<Tag> tags, required bool overrideExistent, dynamic hint});
+  Future<TaggyFile> writeAll(
+      {required String path,
+      required List<Tag> tags,
+      required bool overrideExistent,
+      dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kWriteAllConstMeta;
 
@@ -63,7 +68,11 @@ abstract class Taggy {
   ///
   /// Throws an **exception** when:
   /// - path doesn't exists
-  Future<TaggyFile> writePrimary({required String path, required Tag tag, required bool keepOthers, dynamic hint});
+  Future<TaggyFile> writePrimary(
+      {required String path,
+      required Tag tag,
+      required bool keepOthers,
+      dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kWritePrimaryConstMeta;
 
@@ -82,7 +91,8 @@ abstract class Taggy {
   ///
   /// Throws an **exception** when:
   /// - path doesn't exists
-  Future<void> removeTag({required String path, required TagType tagType, dynamic hint});
+  Future<void> removeTag(
+      {required String path, required TagType tagType, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kRemoveTagConstMeta;
 }
@@ -309,10 +319,12 @@ class TaggyFile {
 
 class TaggyImpl implements Taggy {
   final TaggyPlatform _platform;
-  factory TaggyImpl(ExternalLibrary dylib) => TaggyImpl.raw(TaggyPlatform(dylib));
+  factory TaggyImpl(ExternalLibrary dylib) =>
+      TaggyImpl.raw(TaggyPlatform(dylib));
 
   /// Only valid on web/WASM platforms.
-  factory TaggyImpl.wasm(FutureOr<WasmModule> module) => TaggyImpl(module as ExternalLibrary);
+  factory TaggyImpl.wasm(FutureOr<WasmModule> module) =>
+      TaggyImpl(module as ExternalLibrary);
   TaggyImpl.raw(this._platform);
   Future<TaggyFile> readAll({required String path, dynamic hint}) {
     var arg0 = _platform.api2wire_String(path);
@@ -320,18 +332,15 @@ class TaggyImpl implements Taggy {
       callFfi: (port_) => _platform.inner.wire_read_all(port_, arg0),
       parseSuccessData: _wire2api_taggy_file,
       constMeta: kReadAllConstMeta,
-      argValues: [
-        path
-      ],
+      argValues: [path],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kReadAllConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kReadAllConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "read_all",
-        argNames: [
-          "path"
-        ],
+        argNames: ["path"],
       );
 
   Future<TaggyFile> readPrimary({required String path, dynamic hint}) {
@@ -340,18 +349,15 @@ class TaggyImpl implements Taggy {
       callFfi: (port_) => _platform.inner.wire_read_primary(port_, arg0),
       parseSuccessData: _wire2api_taggy_file,
       constMeta: kReadPrimaryConstMeta,
-      argValues: [
-        path
-      ],
+      argValues: [path],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kReadPrimaryConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kReadPrimaryConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "read_primary",
-        argNames: [
-          "path"
-        ],
+        argNames: ["path"],
       );
 
   Future<TaggyFile> readAny({required String path, dynamic hint}) {
@@ -360,70 +366,63 @@ class TaggyImpl implements Taggy {
       callFfi: (port_) => _platform.inner.wire_read_any(port_, arg0),
       parseSuccessData: _wire2api_taggy_file,
       constMeta: kReadAnyConstMeta,
-      argValues: [
-        path
-      ],
+      argValues: [path],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kReadAnyConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kReadAnyConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "read_any",
-        argNames: [
-          "path"
-        ],
+        argNames: ["path"],
       );
 
-  Future<TaggyFile> writeAll({required String path, required List<Tag> tags, required bool overrideExistent, dynamic hint}) {
+  Future<TaggyFile> writeAll(
+      {required String path,
+      required List<Tag> tags,
+      required bool overrideExistent,
+      dynamic hint}) {
     var arg0 = _platform.api2wire_String(path);
     var arg1 = _platform.api2wire_list_tag(tags);
     var arg2 = overrideExistent;
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_write_all(port_, arg0, arg1, arg2),
+      callFfi: (port_) =>
+          _platform.inner.wire_write_all(port_, arg0, arg1, arg2),
       parseSuccessData: _wire2api_taggy_file,
       constMeta: kWriteAllConstMeta,
-      argValues: [
-        path,
-        tags,
-        overrideExistent
-      ],
+      argValues: [path, tags, overrideExistent],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kWriteAllConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kWriteAllConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "write_all",
-        argNames: [
-          "path",
-          "tags",
-          "overrideExistent"
-        ],
+        argNames: ["path", "tags", "overrideExistent"],
       );
 
-  Future<TaggyFile> writePrimary({required String path, required Tag tag, required bool keepOthers, dynamic hint}) {
+  Future<TaggyFile> writePrimary(
+      {required String path,
+      required Tag tag,
+      required bool keepOthers,
+      dynamic hint}) {
     var arg0 = _platform.api2wire_String(path);
     var arg1 = _platform.api2wire_box_autoadd_tag(tag);
     var arg2 = keepOthers;
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_write_primary(port_, arg0, arg1, arg2),
+      callFfi: (port_) =>
+          _platform.inner.wire_write_primary(port_, arg0, arg1, arg2),
       parseSuccessData: _wire2api_taggy_file,
       constMeta: kWritePrimaryConstMeta,
-      argValues: [
-        path,
-        tag,
-        keepOthers
-      ],
+      argValues: [path, tag, keepOthers],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kWritePrimaryConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kWritePrimaryConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "write_primary",
-        argNames: [
-          "path",
-          "tag",
-          "keepOthers"
-        ],
+        argNames: ["path", "tag", "keepOthers"],
       );
 
   Future<void> removeAll({required String path, dynamic hint}) {
@@ -432,41 +431,34 @@ class TaggyImpl implements Taggy {
       callFfi: (port_) => _platform.inner.wire_remove_all(port_, arg0),
       parseSuccessData: _wire2api_unit,
       constMeta: kRemoveAllConstMeta,
-      argValues: [
-        path
-      ],
+      argValues: [path],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kRemoveAllConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kRemoveAllConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "remove_all",
-        argNames: [
-          "path"
-        ],
+        argNames: ["path"],
       );
 
-  Future<void> removeTag({required String path, required TagType tagType, dynamic hint}) {
+  Future<void> removeTag(
+      {required String path, required TagType tagType, dynamic hint}) {
     var arg0 = _platform.api2wire_String(path);
     var arg1 = api2wire_tag_type(tagType);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_remove_tag(port_, arg0, arg1),
       parseSuccessData: _wire2api_unit,
       constMeta: kRemoveTagConstMeta,
-      argValues: [
-        path,
-        tagType
-      ],
+      argValues: [path, tagType],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kRemoveTagConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kRemoveTagConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "remove_tag",
-        argNames: [
-          "path",
-          "tagType"
-        ],
+        argNames: ["path", "tagType"],
       );
 
   void dispose() {
@@ -480,7 +472,8 @@ class TaggyImpl implements Taggy {
 
   AudioInfo _wire2api_audio_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return AudioInfo(
       durationSec: _wire2api_opt_box_autoadd_u64(arr[0]),
       overallBitrate: _wire2api_opt_box_autoadd_u32(arr[1]),
@@ -558,7 +551,8 @@ class TaggyImpl implements Taggy {
 
   Picture _wire2api_picture(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return Picture(
       picType: _wire2api_picture_type(arr[0]),
       picData: _wire2api_uint_8_list(arr[1]),
@@ -576,7 +570,8 @@ class TaggyImpl implements Taggy {
 
   Tag _wire2api_tag(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 17) throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
+    if (arr.length != 17)
+      throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
     return Tag(
       tagType: _wire2api_tag_type(arr[0]),
       pictures: _wire2api_list_picture(arr[1]),
@@ -604,7 +599,8 @@ class TaggyImpl implements Taggy {
 
   TaggyFile _wire2api_taggy_file(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return TaggyFile(
       fileType: _wire2api_opt_box_autoadd_file_type(arr[0]),
       size: _wire2api_opt_box_autoadd_u64(arr[1]),

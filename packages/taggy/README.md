@@ -1,1 +1,1 @@
-Available [here](../../README.md)
+../../README.md

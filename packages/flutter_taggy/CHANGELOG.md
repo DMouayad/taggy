@@ -26,5 +26,3 @@
  - **DOCS**(License): update License.
  - **DOCS**: add CHANGELOG.md for both packages.
  - **DOCS**: add license files.
-
-Available [here](../../CHANGELOG.md)
