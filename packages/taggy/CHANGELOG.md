@@ -1,3 +1,7 @@
+## 0.1.2+1
+
+ - **DOCS**: direct sub-packages README file to the root package file.
+
 ## 0.1.2
 
  - **REFACTOR**(taggy): extract loading the Dylib to a helper function.
