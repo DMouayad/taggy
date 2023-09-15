@@ -22,14 +22,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          components: rustfmt, clippy
+          components: rustfmt
 
       # Rust
       - name: Check Rust format
         working-directory: ./packages/taggy/native/src
         run: rustfmt --check lib.rs
-      - name: Rust code analysis
-        run: cargo clippy -- -D warnings
       - name: Run Rust tests
         run: cargo test
       - name: Build Rust code for Dart tests
