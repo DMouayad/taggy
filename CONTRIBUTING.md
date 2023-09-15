@@ -44,13 +44,7 @@ A quick way to generate it is running `cargo build` in the project root. The pre
 
 Now you can *run* the unit tests by executing: `dart test` or `melos run test`
 
-### Run the Flutter example app or Integration tests 
+### Run the Flutter example app and Integration tests 
 
-You need to build the library binaries:
- - macOS (at least for `build-apple.sh`)
-    - [Android NDK](https://developer.android.com/ndk/downloads)
-        - NDK version 25 (`r25b`)
-    - [Zig](https://ziglang.org/learn/getting-started/#installing-zig)
-    - llvm (with `clang-cl`!)
-        - On Windows: get the pre-built binaries from [official source](https://releases.llvm.org/download.html)
-        - On macOS: run `brew install llvm`
+You should be able to run the example app and integration tests without any issues since it will automatically
+download the required binaries from GitHub package releases.
