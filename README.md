@@ -308,7 +308,7 @@ Run the following command:
 the [Contributing](CONTRIBUTING.md) guide.
 
 
-- 🙏🏻 You can also contribute if you ⭐ this repository and 👍🏻 the [package](https://pub.dev/packages/taggy) on `Pub.dev`, we do appreciate your love. 
+- 🙏🏻 You can also contribute if you ⭐ this repository, we do appreciate your love. 
 
 ## Acknowledgement
 
