@@ -1,7 +1,6 @@
 name: Publish Release(s)
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "*"
