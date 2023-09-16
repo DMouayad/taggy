@@ -1,3 +1,7 @@
+## 0.1.2+2
+
+ - **DOCS**: create separate README files.
+
 ## 0.1.2+1
 
  - **DOCS**: direct sub-packages README file to the root package file.
