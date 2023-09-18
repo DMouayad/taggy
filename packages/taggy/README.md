@@ -1,15 +1,32 @@
 <div align="center">
 
-<a href="https://pub.dartlang.org/packages/taggy"><img alt="taggy" src="https://img.shields.io/pub/v/taggy"></a>
 <a href="https://github.com/DMouayad/taggy/releases"><img src="https://img.shields.io/github/v/release/DMouayad/taggy?style=flat-square&color=blue" alt="Release"></a>
+<a href="https://pub.dartlang.org/packages/taggy"><img alt="taggy" src="https://img.shields.io/pub/v/taggy"></a>
 <a href="https://github.com/DMouayad/taggy/actions"><img src="https://img.shields.io/github/actions/workflow/status/DMouayad/taggy/.github%2Fworkflows%2Fbuild.yaml" alt="Build Status"></a>
 <a href="https://github.com/DMouayad/taggy"><img src="https://img.shields.io/github/stars/DMouayad/taggy.svg?style=flat&logo=github&colorB=deeppink&label=stars" alt="Github Stars"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="MIT License"></a>
 </div>
 
-![taggy cover image](readme-assets/Taggy%20cover.png)
+![taggy cover image](../../readme-assets/Taggy%20cover.png)
 
-Provides a simple API for reading, writing and converting audio tags.
+Provides a simple yet powerful API for reading, writing and converting audio tags (metadata).
+
+**Table of contents:**
+
+<!-- TOC -->
+  * [Features](#features)
+    * [Planned features ⏳](#planned-features-)
+  * [Getting started](#getting-started)
+  * [Installation](#installation)
+  * [Usage](#usage)
+    * [Initialization](#initialization)
+    * [About `TaggyFile`](#about-taggyfile)
+    * [Reading tags](#reading-tags)
+    * [Writing tags](#writing-tags)
+    * [Removing tags](#removing-tags)
+  * [Feed back & Contributions](#feed-back--contributions)
+  * [Acknowledgement](#acknowledgement)
+<!-- TOC -->
 
 ## Features
 
@@ -21,15 +38,15 @@ Provides a simple API for reading, writing and converting audio tags.
 
 ### Planned features ⏳
 
-- Batches: write to multiple files at the same time.
-- Editing file name: add the option to rename a file based on its track title.
-- TaggyFileResult: all public APIs should return a universal result:
-
-  It will contain a value of `TaggyFile` type or a `TaggyError`.
+- **Batches**: write to multiple files at the same time.
+- **Editing file name**: add the option to rename a file based on its track title.
+- **TaggyFileResult**: all public APIs should return a universal result;
+  a value of `TaggyFile` type or an error of `TaggyError` type.
+- **Converting tags**
 
 ## Getting started
 
-- Install & Setup the package.
+- Install the package.
 - Read the [Usage](#usage) section to explore Taggy's features.
 - For more details: check out the [example app](example/README.md).
 
@@ -60,15 +77,15 @@ It can be done in two ways:
 - Second method:
 
   ```dart
-    import 'package:taggy/taggy.dart';
-  
-    // call this helper function which takes care of loading the library for you.
-    Taggy.initializeFrom(getTaggyDylibFromDirectory('path/of/binaries/directory'));
+  import 'package:taggy/taggy.dart';
+
+  // call this helper function which takes care of loading the library for you.
+  Taggy.initializeFrom(getTaggyDylibFromDirectory('path/of/binaries/directory'));
     ```
 
-### About the `TaggyFile` type
+### About `TaggyFile`
 
-- It gives us a little more information about the file(s) we're reading from or writing to, so alongside the list of `Tag`,
+- It gives us a little more information about the file we're reading from or writing to, so alongside the list of `Tag`,
   we get:
     - the file size (in bytes).
     - a `FileType`: whether it's (flac, wav, mpeg, etc).
@@ -173,7 +190,7 @@ It can be done in two ways:
     final Tag? tag = taggyFile.firstTagIfAny;
     ```
 
-### Writing tags:
+### Writing tags
 
 - **About specifying the `TagType`**
 
@@ -224,7 +241,7 @@ It can be done in two ways:
 
   ```dart
   final path = 'path/to/audio/file.mp3';
-  // unfold the [creating a new Tag] section above to find [getTagInstance]
+
   final tagToWrite = getTagInstance(TagType.FilePrimaryType);
 
   final TaggyFile taggyFile = await Taggy.writePrimary(
@@ -242,8 +259,7 @@ It can be done in two ways:
 
   ```dart
   final path = 'path/to/audio/file.mp3';
-  // In the same way as the previous example,
-  // create a list of [Tag] instances.
+
   final tags = [
     getTagInstance(TagType.FilePrimaryType),
     getTagInstance(TagType.Id3v1),
@@ -253,28 +269,29 @@ It can be done in two ways:
     path: path, tag: tagToWrite, overrideExistent: true);
   ```
 
-### Removing tags:
+### Removing tags
 
-- **Remove a specific Tag**:
+* #### Remove a specific Tag
 
-  You can delete a tag from file by specifying this tag type.
+  You can delete a tag from file by specifying its tag type.
 
     ```dart
     final path = 'path/to/audio/file.mp3';
+  
     // The type of to-remove-tag
     final tagType = TagType.Ape;
+    
     final TaggyFile taggyFile = await Taggy.removeTag(path: path, tagType: tagType);
     ``` 
 
-- **Remove all tags**:
+* #### Remove all tags
 
   ```dart
   final path = 'path/to/audio/file.mp3';
   final TaggyFile taggyFile = await Taggy.removeAll(path: path);
   
   print(taggyFile.tags);
-  // output
-  // []
+  // output is []
   ``` 
 
 ## Feed back & Contributions

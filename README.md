@@ -1,8 +1,8 @@
 <div align="center">
 
+<a href="https://github.com/DMouayad/taggy/releases"><img src="https://img.shields.io/github/v/release/DMouayad/taggy?style=flat-square&color=blue" alt="Release"></a>
 <a href="https://pub.dartlang.org/packages/taggy"><img alt="taggy" src="https://img.shields.io/pub/v/taggy"></a>
 <a href="https://pub.dartlang.org/packages/flutter_taggy"><img alt="flutter_taggy" src="https://img.shields.io/pub/v/flutter_taggy"></a>
-<a href="https://github.com/DMouayad/taggy/releases"><img src="https://img.shields.io/github/v/release/DMouayad/taggy?style=flat-square&color=blue" alt="Release"></a>
 <a href="https://github.com/DMouayad/taggy/actions"><img src="https://img.shields.io/github/actions/workflow/status/DMouayad/taggy/.github%2Fworkflows%2Fbuild.yaml" alt="Build Status"></a>
 <a href="https://github.com/DMouayad/taggy"><img src="https://img.shields.io/github/stars/DMouayad/taggy.svg?style=flat&logo=github&colorB=deeppink&label=stars" alt="Github Stars"></a>
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="MIT License"></a>
@@ -10,7 +10,24 @@
 
 ![taggy cover image](readme-assets/Taggy%20cover.png)
 
-Provides a simple API for reading, writing and converting audio tags.
+Provides a simple yet powerful API for reading, writing and converting audio tags (metadata).
+
+**Table of contents:**
+
+<!-- TOC -->
+  * [Features](#features)
+    * [Planned features ⏳](#planned-features-)
+  * [Getting started](#getting-started)
+  * [Installation](#installation)
+  * [Usage](#usage)
+    * [Initialization](#initialization)
+    * [About `TaggyFile`](#about-taggyfile)
+    * [Reading tags](#reading-tags)
+    * [Writing tags](#writing-tags)
+    * [Removing tags](#removing-tags)
+  * [Feed back & Contributions](#feed-back--contributions)
+  * [Acknowledgement](#acknowledgement)
+<!-- TOC -->
 
 ## Features
 
@@ -22,16 +39,16 @@ Provides a simple API for reading, writing and converting audio tags.
 
 ### Planned features ⏳
 
-- Batches: write to multiple files at the same time.
-- Editing file name: add the option to rename a file based on its track title.
-- TaggyFileResult: all public APIs should return a universal result:
-
-  It will contain a value of `TaggyFile` type or a `TaggyError`.
+- **Batches**: write to multiple files at the same time.
+- **Editing file name**: add the option to rename a file based on its track title.
+- **TaggyFileResult**: all public APIs should return a universal result;
+  a value of `TaggyFile` type or an error of `TaggyError` type.
+- **Converting tags**
 
 ## Getting started
 
-- Install & Setup the package.
-- Read the [Usage](#usage) section to explore *Taggy*'s features.
+- Install the package.
+- Read the [Usage](#usage) section to explore Taggy's features.
 - For more details: check out the [Dart example](packages/taggy/example/README.md)
   and [Flutter example](packages/flutter_taggy/example/README.md) apps.
 
@@ -44,6 +61,7 @@ Run the following command:
     ```bash
     dart pub add taggy
     ```
+
 - For a Flutter project:
 
   ```bash
@@ -54,7 +72,7 @@ Run the following command:
 
 ### Initialization
 
-- In **Dart**:
+- **With Dart**
 
   ```dart
   import 'package:taggy/taggy.dart';
@@ -67,13 +85,13 @@ Run the following command:
   Or
   
   ```dart
-    import 'package:taggy/taggy.dart';
-  
-    // call this helper function which takes care of loading the library for you.
-    Taggy.initializeFrom(getTaggyDylibFromDirectory('path/of/binaries/directory'));
+  import 'package:taggy/taggy.dart';
+
+  // call this helper function which takes care of loading the library for you.
+  Taggy.initializeFrom(getTaggyDylibFromDirectory('path/of/binaries/directory'));
     ```
 
-- In **Flutter**:
+- **With Flutter**
 
   ```dart
   import 'package:flutter_taggy/flutter_taggy.dart';
@@ -88,7 +106,7 @@ Run the following command:
   }
   ```
 
-### About the `TaggyFile` type
+### About `TaggyFile`
 
 - It gives us a little more information about the file(s) we're reading from or writing to, so alongside the list of `Tag`, 
   we get:
@@ -96,7 +114,7 @@ Run the following command:
   - a `FileType`: whether it's (flac, wav, mpeg, etc).
   - an `AudioInfo`, which is another type, holds the properties of the audio track.
 - you can pretty-print a `TaggyFile` instance by calling `formatAsAString()`:
-  
+
   <details>
   <summary>output example</summary>
 
@@ -156,7 +174,7 @@ Run the following command:
 ### Reading tags
 
 - **Reading all tags:**
-  
+
     ```dart
     const path = 'path/to/audio/file.mp3';
 
@@ -179,7 +197,7 @@ Run the following command:
 
 
 - **Reading any tag:**
-  
+
   It's similar to `readPrimary` except that the returned `TaggyFile.tags` might be empty.
 
     ```dart
@@ -195,23 +213,23 @@ Run the following command:
     final Tag? tag = taggyFile.firstTagIfAny;
     ```
 
-### Writing tags:
+### Writing tags
 
 - **About specifying the `TagType`**
-  
+
   A tag type is required for creating a new `Tag` instance.
   You can:
-  
-    -  check what `TagType` the file supports based on its type(extension). see this [table](https://github.com/Serial-ATA/lofty-rs/blob/main/SUPPORTED_FORMATS.md).
 
-    -  Use the function `Taggy.writePrimary()`
-      and pass it a `Tag` with a type of `TagType.FilePrimaryType`, as shown in example below.
+  -  check what `TagType` the file supports based on its type(extension). see this [table](https://github.com/Serial-ATA/lofty-rs/blob/main/SUPPORTED_FORMATS.md).
+
+  -  Use the function `Taggy.writePrimary()`
+     and pass it a `Tag` with a type of `TagType.FilePrimaryType`, as shown in example below.
 
 
 - <details> 
-  
+
     <summary>Example of creating a new Tag</summary>
-      
+
     ```dart
     Tag getTagInstance(TagType tagType){
       return Tag(
@@ -239,14 +257,14 @@ Run the following command:
       );
     }
     ```
-      
+
 </details>
 
 - **Writing primary tag:**
 
   ```dart
   final path = 'path/to/audio/file.mp3';
-  // unfold the [creating a new Tag] section above to find [getTagInstance]
+
   final tagToWrite = getTagInstance(TagType.FilePrimaryType);
 
   final TaggyFile taggyFile = await Taggy.writePrimary(
@@ -258,14 +276,13 @@ Run the following command:
   ```
 
 - **Writing multiple tags**:
-  
+
   In most use-cases, you'll use `Taggy.writePrimary()` to add/edit an audio tag metadata,
   but you can also provide multiple tags to be written to the same file.
 
   ```dart
   final path = 'path/to/audio/file.mp3';
-  // In the same way as the previous example,
-  // create a list of [Tag] instances.
+
   final tags = [
     getTagInstance(TagType.FilePrimaryType),
     getTagInstance(TagType.Id3v1),
@@ -275,28 +292,29 @@ Run the following command:
     path: path, tag: tagToWrite, overrideExistent: true);
   ```
 
-### Removing tags:
+### Removing tags
 
-- **Remove a specific Tag**:
-  
-  You can delete a tag from file by specifying this tag type.
+* #### Remove a specific Tag
+
+  You can delete a tag from file by specifying its tag type.
 
     ```dart
     final path = 'path/to/audio/file.mp3';
+  
     // The type of to-remove-tag
     final tagType = TagType.Ape;
+    
     final TaggyFile taggyFile = await Taggy.removeTag(path: path, tagType: tagType);
     ``` 
 
-- **Remove all tags**:
+* #### Remove all tags
 
   ```dart
   final path = 'path/to/audio/file.mp3';
   final TaggyFile taggyFile = await Taggy.removeAll(path: path);
   
   print(taggyFile.tags);
-  // output
-  // []
+  // output is []
   ``` 
 
 ## Feed back & Contributions
@@ -304,11 +322,12 @@ Run the following command:
 - 🐛 Found an issue or encountered a bug? please check the existing [issues](https://github.com/DMouayad/taggy/issues) or create a new one.
 
 
-- 💪🏻 Want to contribute? Thank you, its always welcomed!. You can start by reading 
-the [Contributing](CONTRIBUTING.md) guide.
+- 💪🏻 Want to contribute? Thank you, its always welcomed!. You can start by reading
+  the [Contributing](CONTRIBUTING.md) guide.
 
 
-- 🙏🏻 You can also contribute if you ⭐ this repository, we do appreciate your love. 
+- 🙏🏻 You can also contribute if you ⭐ this repository and 👍🏻 the [Dart](https://pub.dev/packages/taggy) and
+  [Flutter](https://pub.dev/packages/flutter_taggy) packages on `Pub.dev`, we do appreciate your love.
 
 ## Acknowledgement
 
