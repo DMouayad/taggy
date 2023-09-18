@@ -1,5 +1,5 @@
 name: flutter_taggy
-description: Provides a simple API for reading, writing and converting audio tags.
+description: Provides a simple yet powerful API for reading, writing and converting audio tags (metadata).
 version: 0.1.2+2
 homepage: https://github.com/DMouayad/taggy/tree/master/packages/flutter_taggy
 repository: https://github.com/DMouayad/taggy
