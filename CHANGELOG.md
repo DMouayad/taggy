@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2023-09-18
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`flutter_taggy` - `v0.1.2+3`](#flutter_taggy---v0123)
+ - [`taggy` - `v0.1.2+3`](#taggy---v0123)
+
+---
+
+#### `flutter_taggy` - `v0.1.2+3`
+
+ - **DOCS**: update README files.
+ - **DOCS**: create separate README files.
+ - **DOCS**: direct sub-packages README file to the root package file.
+
+#### `taggy` - `v0.1.2+3`
+
+ - **DOCS**: update README files.
+
+
 ## 2023-09-16
 
 ### Changes

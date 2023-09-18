@@ -1,6 +1,6 @@
 name: taggy
 description: Provides a simple yet powerful API for reading, writing and converting audio tags (metadata).
-version: 0.1.2+2
+version: 0.1.2+3
 repository: https://github.com/DMouayad/taggy
 homepage: https://github.com/DMouayad/taggy/tree/master/packages/taggy
 issue_tracker: https://github.com/DMouayad/taggy/issues
