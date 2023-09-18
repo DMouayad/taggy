@@ -143,7 +143,7 @@ pub fn remove_all(path: String) -> anyhow::Result<()> {
         .map(|e| e.tag_type())
         .collect::<Vec<lofty::TagType>>();
 
-    &tagged.clear();
+    let _ = &tagged.clear();
 
     // foreach type we insert an empty tag to override its data
     for tag_type in tags_types {

@@ -16,7 +16,6 @@ pub struct TaggyFile {
     pub(crate) tags: Vec<Tag>,
     pub(crate) primary_tag_type: TagType,
 }
-
 impl TaggyFile {
     /// Returns the tag which has a [`TagType`] equals to this file `primary_tag_type`.
     pub fn primary_tag(self) -> Option<Tag> {
