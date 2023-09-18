@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_taggy/flutter_taggy.dart';
 
@@ -55,7 +53,7 @@ Future<void> handleTaggyMethodCall(
 }
 
 Tag getDefaultTag() {
-  return Tag(
+  return const Tag(
     tagType: TagType.FilePrimaryType,
     album: '',
     trackTitle: '',

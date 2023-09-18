@@ -5,10 +5,12 @@ import 'package:path/path.dart' as p;
 
 Future<void> main(List<String> args) async {
   // init Taggy
-  // NOTE: if you you're running this locally, you need to run `cargo build`
-  // so it generates the binary files
+  // NOTE: if you you're running this locally, you need to run the `cargo build`
+  // command so it generates the binary files
   Taggy.initializeFrom(getTaggyDylibFromDirectory('../../target/debug'));
+
   await readAllTags();
+
   await writeTag();
 }
 
@@ -45,25 +47,30 @@ Future<void> writeTag() async {
 
 Future<void> readAllTags() async {
   final taggyFile = await Taggy.readAll(_getAudioSamplePath());
-  // use the returned info in `taggyFile` based on your use-case
+  // use `taggyFile` as you wish
   final audioInfo = taggyFile.audio;
   final tags = taggyFile.tags;
   final trackDuration = taggyFile.duration;
   final fileType = taggyFile.fileType;
   final size = taggyFile.sizeInMB;
+  print('audioInfo: $audioInfo');
+  print('tags: $tags');
+  print('fileType: $fileType');
+  print('trackDuration: $trackDuration');
+  print('size: $size');
 }
 
 /**
  * Helper functions
  */
 
+/// Returns the path to an audio file
+String _getAudioSamplePath() => p.join(_getAssetsDirPath(), 'sample.mp3');
+
+String _getImagePath() => p.join(_getAssetsDirPath(), 'image.jpg');
+
 String _getAssetsDirPath() {
   final dir = File(p.current).parent.absolute;
   final sep = p.separator;
   return p.join(dir.path, 'taggy${sep}example${sep}assets');
 }
-
-/// Returns the path to an audio file
-String _getAudioSamplePath() => p.join(_getAssetsDirPath(), 'sample.mp3');
-
-String _getImagePath() => p.join(_getAssetsDirPath(), 'image.jpg');
